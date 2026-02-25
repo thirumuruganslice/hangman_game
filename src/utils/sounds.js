@@ -36,7 +36,9 @@ class SoundManager {
       gain.connect(ctx.destination);
       osc.start(t);
       osc.stop(t + dur + 0.02);
-    } catch (_) {}
+    } catch {
+      return;
+    }
   }
 
   // Noise burst (for percussive hits)
@@ -58,7 +60,9 @@ class SoundManager {
       gain.connect(ctx.destination);
       src.start(t);
       src.stop(t + dur + 0.02);
-    } catch (_) {}
+    } catch {
+      return;
+    }
   }
 
   // Bubbly pop click
@@ -112,9 +116,9 @@ class SoundManager {
 
     // ── Mario-ish main melody ────────────────────────────────────────────
     const melody = [
-      [523, 0.12, 0.9],  [523, 0.12, 1.04], [523, 0.14, 1.18],
+      [523, 0.12, 0.9], [523, 0.12, 1.04], [523, 0.14, 1.18],
       [415, 0.08, 1.34], [523, 0.14, 1.44], [659, 0.32, 1.62],
-      [784, 0.14, 2.0],  [698, 0.12, 2.16], [784, 0.60, 2.30],
+      [784, 0.14, 2.0], [698, 0.12, 2.16], [784, 0.60, 2.30],
     ];
     melody.forEach(([f, d, s]) => this._tone(f, d, "square", 0.24, s));
 
