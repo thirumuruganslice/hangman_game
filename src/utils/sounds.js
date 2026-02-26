@@ -191,6 +191,29 @@ class SoundManager {
     this._tone(220, 0.06, "square", 0.15, 0);
     this._tone(110, 0.18, "sawtooth", 0.18, 0.05);
   }
+
+  // Diamond/coin collect sound
+  playCoinCollect() {
+    this._tone(1319, 0.06, "sine", 0.22, 0);
+    this._tone(1568, 0.08, "sine", 0.2, 0.06);
+    this._tone(2093, 0.12, "sine", 0.18, 0.12);
+  }
+
+  // Hint reveal sparkle
+  playHintReveal() {
+    this._tone(880, 0.08, "sine", 0.2, 0);
+    this._tone(1047, 0.08, "sine", 0.18, 0.07);
+    this._tone(1319, 0.1, "sine", 0.2, 0.14);
+    this._tone(1568, 0.15, "triangle", 0.15, 0.22);
+  }
+
+  // Big reward sound (win bonus)
+  playBigReward() {
+    [1047, 1319, 1568, 1760, 2093].forEach((f, i) =>
+      this._tone(f, 0.12, "sine", 0.2, i * 0.06)
+    );
+    this._tone(2637, 0.3, "triangle", 0.15, 0.35);
+  }
 }
 
 export const soundManager = new SoundManager();

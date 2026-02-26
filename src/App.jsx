@@ -53,6 +53,11 @@ const E = {
   medal: "\u{1F3C5}",
   hi: "\u{1F44B}",
   clap: "\u{1F44F}",
+  bulb: "\u{1F4A1}",
+  lock: "\u{1F512}",
+  unlock: "\u{1F513}",
+  mag: "\u{1F50D}",
+  info: "\u2139\uFE0F",
 };
 
 const MAX_WRONG = 6;
@@ -60,6 +65,8 @@ let _pid = 0;
 const newId = () => ++_pid;
 
 const THEME_STORAGE_KEY = "hangman_theme";
+const DIAMONDS_STORAGE_KEY = "hangman_diamonds";
+
 function getInitialTheme() {
   try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
@@ -71,6 +78,32 @@ function getInitialTheme() {
     ? "dark"
     : "light";
 }
+
+function getInitialDiamonds() {
+  try {
+    const saved = localStorage.getItem(DIAMONDS_STORAGE_KEY);
+    if (saved !== null) return parseInt(saved, 10) || 0;
+  } catch {
+    // ignore
+  }
+  return 0;
+}
+
+// ── Reward tiers ──────────────────────────────────────────────────────────────
+const REWARDS = {
+  correctLetter: 1, // per correct letter guess
+  combo2: 2, // combo x2 bonus
+  combo3: 3, // combo x3 bonus
+  combo4: 5, // combo x4 bonus
+  combo5plus: 8, // combo x5+ bonus
+  winGame: 10, // base win reward
+  perfectGame: 25, // 0 mistakes bonus
+  streakBonus: 5, // per streak level (>=2)
+};
+
+// ── Hint system ───────────────────────────────────────────────────────────────
+const HINT_COST = 15; // diamonds per hint
+const MAX_HINTS_PER_GAME = 3;
 
 // ── Message pools ─────────────────────────────────────────────────────────────
 const TAUNTS = [
@@ -198,8 +231,8 @@ const STAR_POSITIONS = [
 ];
 
 function getNewGame() {
-  const {word, category} = getRandomWord();
-  return {word, category, guessedLetters: new Set()};
+  const {word, category, clue} = getRandomWord();
+  return {word, category, clue, guessedLetters: new Set()};
 }
 
 // ── CSS keyframes ─────────────────────────────────────────────────────────────
@@ -307,12 +340,54 @@ const STYLES = `
   60%  { transform:translateX(-5px); opacity:1; }
   100% { transform:translateX(0); opacity:1; }
 }
+@keyframes diamondPop {
+  0%   { transform:scale(0) rotate(-20deg); opacity:0; }
+  50%  { transform:scale(1.5) rotate(10deg); opacity:1; }
+  100% { transform:scale(1) rotate(0deg); opacity:1; }
+}
+@keyframes diamondFloat {
+  0%   { transform:translateY(0) scale(1); opacity:1; }
+  100% { transform:translateY(-40px) scale(1.3); opacity:0; }
+}
+@keyframes coinShine {
+  0%   { background-position:-200% center; }
+  100% { background-position:200% center; }
+}
+@keyframes rewardSlide {
+  0%   { transform:translateY(20px) scale(0.8); opacity:0; }
+  60%  { transform:translateY(-4px) scale(1.05); opacity:1; }
+  100% { transform:translateY(0) scale(1); opacity:1; }
+}
+@keyframes hintReveal {
+  0%   { transform:scale(0) rotate(-30deg); opacity:0; filter:blur(8px); }
+  50%  { transform:scale(1.3) rotate(5deg); opacity:1; filter:blur(0); }
+  100% { transform:scale(1) rotate(0deg); opacity:1; filter:blur(0); }
+}
+@keyframes hintGlow {
+  0%,100% { box-shadow:0 0 0 0 rgba(168,85,247,0); }
+  50%     { box-shadow:0 0 20px 4px rgba(168,85,247,0.4); }
+}
+@keyframes hintShimmer {
+  0%   { background-position:-200% center; }
+  100% { background-position:200% center; }
+}
+@keyframes modalSlideUp {
+  0%   { transform:translateY(30px) scale(0.95); opacity:0; }
+  100% { transform:translateY(0) scale(1); opacity:1; }
+}
+@keyframes pulseGlow {
+  0%,100% { opacity:0.6; }
+  50%     { opacity:1; }
+}
 `;
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [gameState, setGameState] = useState(getNewGame);
   const [scores, setScores] = useState({wins: 0, losses: 0});
+  const [diamonds, setDiamonds] = useState(getInitialDiamonds);
+  const [diamondsEarnedThisGame, setDiamondsEarnedThisGame] = useState(0);
+  const [diamondPopup, setDiamondPopup] = useState(null);
   const [soundOn, setSoundOn] = useState(true);
   const [theme, setTheme] = useState(getInitialTheme);
   const [showResult, setShowResult] = useState(false);
@@ -327,8 +402,12 @@ export default function App() {
   const [revealedLetter, setRevealedLetter] = useState(null);
   const [winStreak, setWinStreak] = useState(0);
   const [resultMsg, setResultMsg] = useState("");
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [showHintModal, setShowHintModal] = useState(false);
+  const [hintRevealKey, setHintRevealKey] = useState(0);
   const toastRef = useRef(null);
   const comboRef = useRef(null);
+  const diamondRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -339,7 +418,26 @@ export default function App() {
     }
   }, [theme]);
 
-  const {word, category, guessedLetters} = gameState;
+  useEffect(() => {
+    try {
+      localStorage.setItem(DIAMONDS_STORAGE_KEY, String(diamonds));
+    } catch {
+      // ignore
+    }
+  }, [diamonds]);
+
+  const awardDiamonds = useCallback((amount, label) => {
+    if (amount <= 0) return;
+    setDiamonds((d) => d + amount);
+    setDiamondsEarnedThisGame((d) => d + amount);
+    clearTimeout(diamondRef.current);
+    setDiamondPopup({amount, label, key: newId()});
+    diamondRef.current = setTimeout(() => setDiamondPopup(null), 1800);
+    soundManager.playCoinCollect();
+  }, []);
+
+  const {word, category, clue, guessedLetters} = gameState;
+  console.log("Word:", word);
   const wrongLetters = [...guessedLetters].filter((l) => !word.includes(l));
   const correctLetters = [...guessedLetters].filter((l) => word.includes(l));
   const wrongGuesses = wrongLetters.length;
@@ -381,6 +479,41 @@ export default function App() {
     setTimeout(() => setFireworks([]), 2400);
   }, []);
 
+  // ── Hint logic ───────────────────────────────────────────────────────────
+  const unrevealedLetters = word
+    .split("")
+    .filter((l) => !guessedLetters.has(l));
+  const uniqueUnrevealed = [...new Set(unrevealedLetters)];
+  const canHint =
+    !isOver && uniqueUnrevealed.length > 0 && hintsUsed < MAX_HINTS_PER_GAME;
+  const canAffordHint = diamonds >= HINT_COST;
+
+  const useHint = useCallback(() => {
+    if (!canHint || !canAffordHint) return;
+    setShowHintModal(false);
+    const letter =
+      uniqueUnrevealed[Math.floor(Math.random() * uniqueUnrevealed.length)];
+    setDiamonds((d) => d - HINT_COST);
+    setHintsUsed((h) => h + 1);
+    const newGuessed = new Set(guessedLetters);
+    newGuessed.add(letter);
+    setGameState((s) => ({...s, guessedLetters: newGuessed}));
+    setRevealedLetter(letter);
+    setTimeout(() => setRevealedLetter(null), 600);
+    setHintRevealKey((k) => k + 1);
+    soundManager.playCoinCollect();
+    showToast(`${E.bulb} Hint: ${letter}`);
+    spawnParticles([E.bulb, E.sparkles, E.gem], 6, 50);
+  }, [
+    canHint,
+    canAffordHint,
+    uniqueUnrevealed,
+    guessedLetters,
+    diamonds,
+    showToast,
+    spawnParticles,
+  ]);
+
   // ── Game over ──────────────────────────────────────────────────────────────
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -397,6 +530,24 @@ export default function App() {
         launchFireworks();
         setFlashType("green");
         setTimeout(() => setFlashType(null), 600);
+
+        // Win bonus diamonds
+        let winBonus = REWARDS.winGame;
+        // Perfect game bonus (0 wrong guesses)
+        const finalWrong = [...guessedLetters].filter(
+          (l) => !word.includes(l),
+        ).length;
+        if (finalWrong === 0) winBonus += REWARDS.perfectGame;
+        // Streak bonus
+        // winStreak hasn't been incremented yet, so current streak is winStreak + 1
+        const newStreak = winStreak + 1;
+        if (newStreak >= 2) winBonus += REWARDS.streakBonus * newStreak;
+        setTimeout(() => {
+          setDiamonds((d) => d + winBonus);
+          setDiamondsEarnedThisGame((d) => d + winBonus);
+          soundManager.playBigReward();
+        }, 800);
+
         // second bell cascade at 4 seconds in
         setTimeout(() => soundManager.playVictoryBells(), 4000);
       } else {
@@ -409,7 +560,16 @@ export default function App() {
       }
       return () => clearTimeout(t);
     }
-  }, [isOver, isWon, resultShown, spawnParticles, launchFireworks]);
+  }, [
+    isOver,
+    isWon,
+    resultShown,
+    spawnParticles,
+    launchFireworks,
+    guessedLetters,
+    word,
+    winStreak,
+  ]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // ── Guess ──────────────────────────────────────────────────────────────────
@@ -425,6 +585,18 @@ export default function App() {
         setCombo(newCombo);
         setRevealedLetter(letter);
         setTimeout(() => setRevealedLetter(null), 500);
+
+        // Award diamonds for correct letter
+        let letterReward = REWARDS.correctLetter;
+        if (newCombo >= 5) letterReward += REWARDS.combo5plus;
+        else if (newCombo >= 4) letterReward += REWARDS.combo4;
+        else if (newCombo >= 3) letterReward += REWARDS.combo3;
+        else if (newCombo >= 2) letterReward += REWARDS.combo2;
+        awardDiamonds(
+          letterReward,
+          newCombo >= 2 ? `Combo x${newCombo}` : "Correct!",
+        );
+
         if (newCombo >= 2) {
           const msg = COMBO_MSGS[Math.min(newCombo - 2, COMBO_MSGS.length - 1)];
           clearTimeout(comboRef.current);
@@ -455,7 +627,15 @@ export default function App() {
       }
       setGameState((s) => ({...s, guessedLetters: newGuessed}));
     },
-    [guessedLetters, word, isOver, combo, showToast, spawnParticles],
+    [
+      guessedLetters,
+      word,
+      isOver,
+      combo,
+      showToast,
+      spawnParticles,
+      awardDiamonds,
+    ],
   );
 
   // ── Physical keyboard ──────────────────────────────────────────────────────
@@ -477,6 +657,10 @@ export default function App() {
     setFireworks([]);
     setToastMsg(null);
     setComboMsg(null);
+    setDiamondsEarnedThisGame(0);
+    setDiamondPopup(null);
+    setHintsUsed(0);
+    setShowHintModal(false);
     setGameState(getNewGame());
   };
 
@@ -578,6 +762,20 @@ export default function App() {
           </div>
         )}
 
+        {/* Diamond earned popup */}
+        {diamondPopup && (
+          <div
+            key={diamondPopup.key}
+            className="fixed top-28 left-1/2 z-50 -translate-x-1/2 flex items-center gap-2 bg-linear-to-r from-cyan-500/90 to-blue-600/90 dark:from-cyan-600/90 dark:to-blue-700/90 text-white font-black text-base px-5 py-2.5 rounded-2xl shadow-xl whitespace-nowrap border border-cyan-300/40"
+            style={{
+              animation:
+                "diamondPop 0.35s ease forwards, diamondFloat 1.8s ease 0.4s forwards",
+            }}
+          >
+            {E.gem} +{diamondPopup.amount} {diamondPopup.label}
+          </div>
+        )}
+
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
         <header className="w-full max-w-3xl flex items-center justify-between mb-5">
           <div>
@@ -603,27 +801,40 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Diamond counter */}
+            <div
+              className="h-9 px-3 rounded-xl border border-cyan-300 dark:border-cyan-900 text-cyan-700 dark:text-cyan-300 font-black text-xs flex items-center gap-1.5 shadow-sm"
+              style={{
+                background:
+                  "linear-gradient(90deg, rgba(6,182,212,0.08), rgba(59,130,246,0.08), rgba(6,182,212,0.08))",
+                backgroundSize: "200% 100%",
+                animation: "coinShine 3s linear infinite",
+              }}
+            >
+              {E.gem}
+              <span className="text-sm tabular-nums">{diamonds}</span>
+            </div>
+
             {winStreak >= 2 && (
               <div
-                className="bg-amber-100 dark:bg-amber-950/40 border border-amber-400 dark:border-amber-900 text-amber-700 dark:text-amber-300 font-black text-xs px-3 py-1 rounded-full flex items-center gap-1"
+                className="h-9 px-3 rounded-xl bg-amber-100 dark:bg-amber-950/40 border border-amber-400 dark:border-amber-900 text-amber-700 dark:text-amber-300 font-black text-xs flex items-center gap-1"
                 style={{animation: "streakSlide 0.5s ease forwards"}}
               >
-                {E.fire} {winStreak} streak
+                {E.fire} {winStreak}
               </div>
             )}
-            <div className="flex gap-2 text-xs font-bold">
-              <span className="bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full">
-                {E.trophy} {scores.wins}
-              </span>
-              <span className="bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-900 text-red-600 dark:text-red-300 px-3 py-1 rounded-full">
-                {E.skull} {scores.losses}
-              </span>
+
+            <div className="h-9 px-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 font-black text-xs flex items-center gap-1">
+              {E.trophy} {scores.wins}
+            </div>
+            <div className="h-9 px-3 rounded-xl bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-900 text-red-600 dark:text-red-300 font-black text-xs flex items-center gap-1">
+              {E.skull} {scores.losses}
             </div>
 
             <button
               onClick={toggleTheme}
-              className="h-9 px-3 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-xs font-black tracking-widest text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
+              className="h-9 w-9 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-sm font-black text-gray-700 dark:text-slate-200 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm"
               aria-label={
                 theme === "dark"
                   ? "Switch to light mode"
@@ -631,12 +842,12 @@ export default function App() {
               }
               title={theme === "dark" ? "Light mode" : "Dark mode"}
             >
-              {theme === "dark" ? "LIGHT" : "DARK"}
+              {theme === "dark" ? "\u2600\uFE0F" : "\u{1F319}"}
             </button>
 
             <button
               onClick={toggleSound}
-              className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-lg text-gray-800 dark:text-slate-100 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-800 hover:scale-110 transition-all active:scale-90 shadow-sm"
+              className="h-9 w-9 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-sm text-gray-800 dark:text-slate-100 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm"
             >
               {soundOn ? E.loud : E.mute}
             </button>
@@ -646,10 +857,22 @@ export default function App() {
         {/* ── MAIN CARD ───────────────────────────────────────────────────── */}
         <main className="w-full max-w-3xl bg-white/95 dark:bg-slate-900/95 border border-gray-200 dark:border-slate-700 rounded-3xl p-5 sm:p-7 shadow-xl relative">
           {/* Category badge */}
-          <div className="flex justify-center mb-5">
+          <div className="flex justify-center mb-2">
             <span className="bg-purple-100 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900 text-purple-700 dark:text-purple-300 px-5 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase">
               {E.folder} {category}
             </span>
+          </div>
+
+          {/* Clue / Question */}
+          <div className="flex justify-center mb-5">
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl px-5 py-3 max-w-lg w-full text-center shadow-sm">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400 mb-1">
+                {E.bulb} Clue
+              </p>
+              <p className="text-sm sm:text-base font-semibold text-amber-900 dark:text-amber-100 leading-snug">
+                {clue}
+              </p>
+            </div>
           </div>
 
           {/* Taunt bar */}
@@ -674,7 +897,11 @@ export default function App() {
                 className="bg-gray-50 dark:bg-slate-50 border border-gray-200 dark:border-slate-200 rounded-2xl p-3 shadow-inner"
                 style={shakeKey > 0 ? {animation: "shake 0.45s ease"} : {}}
               >
-                <HangmanCanvas wrongGuesses={wrongGuesses} lost={isLost} />
+                <HangmanCanvas
+                  wrongGuesses={wrongGuesses}
+                  lost={isLost}
+                  won={isWon}
+                />
               </div>
 
               {/* Progress bar */}
@@ -803,15 +1030,42 @@ export default function App() {
                 })}
               </div>
 
-              {/* New game button */}
-              <div className="flex justify-center mt-1">
+              {/* Action buttons */}
+              <div className="flex justify-center gap-3 mt-1">
+                {/* Hint button */}
+                <button
+                  onClick={() => setShowHintModal(true)}
+                  disabled={!canHint}
+                  className={`group h-11 px-5 rounded-2xl font-black text-sm tracking-wider shadow-lg transition-all duration-200 flex items-center gap-2 border ${
+                    canHint
+                      ? "bg-linear-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white border-purple-400/30 shadow-purple-300/40 dark:shadow-purple-900/30 hover:scale-105 active:scale-95"
+                      : "bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-500 border-gray-300 dark:border-slate-700 cursor-not-allowed shadow-none"
+                  }`}
+                  title={
+                    !canHint
+                      ? hintsUsed >= MAX_HINTS_PER_GAME
+                        ? "No hints left"
+                        : isOver
+                          ? "Game over"
+                          : "No letters left"
+                      : `Use hint (${HINT_COST} diamonds)`
+                  }
+                >
+                  {E.bulb} HINT
+                  <span className="text-xs opacity-75">
+                    ({HINT_COST}
+                    {E.gem})
+                  </span>
+                </button>
+
+                {/* New game button */}
                 <button
                   onClick={startNewGame}
-                  className="group bg-linear-to-r from-orange-500 to-pink-600 hover:from-orange-400 hover:to-pink-500 text-white font-black text-sm px-8 py-2.5 rounded-2xl shadow-lg shadow-orange-300/60 dark:shadow-orange-900/30 hover:shadow-orange-400/60 transition-all duration-200 hover:scale-110 active:scale-95 tracking-wider"
+                  className="group h-11 px-6 rounded-2xl bg-linear-to-r from-orange-500 to-pink-600 hover:from-orange-400 hover:to-pink-500 text-white font-black text-sm shadow-lg shadow-orange-300/60 dark:shadow-orange-900/30 hover:shadow-orange-400/60 transition-all duration-200 hover:scale-105 active:scale-95 tracking-wider flex items-center gap-1 border border-orange-400/30"
                 >
-                  <span className="inline-block group-hover:animate-[spin_0.5s_linear] mr-1">
+                  <span className="inline-block group-hover:animate-[spin_0.5s_linear]">
                     {E.refresh}
-                  </span>{" "}
+                  </span>
                   NEW GAME
                 </button>
               </div>
@@ -822,6 +1076,127 @@ export default function App() {
         <p className="mt-3 text-gray-400 dark:text-slate-500 text-xs text-center select-none">
           {E.kbd} Tip: Use your physical keyboard too!
         </p>
+
+        {/* ════════════════════════════════════════════════════════════════════
+            HINT MODAL
+        ════════════════════════════════════════════════════════════════════ */}
+        {showHintModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{animation: "backdropFade 0.2s ease forwards"}}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowHintModal(false);
+            }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(4px)",
+              }}
+            />
+
+            <div
+              className="relative bg-white dark:bg-slate-900 rounded-3xl p-7 text-center max-w-sm w-full z-10 border border-gray-200 dark:border-slate-700 shadow-2xl"
+              style={{
+                animation:
+                  "modalSlideUp 0.35s cubic-bezier(.34,1.56,.64,1) forwards",
+              }}
+            >
+              {/* Icon */}
+              <div
+                className="text-6xl leading-none select-none mb-3 inline-block"
+                style={{animation: "hintGlow 2s ease infinite"}}
+              >
+                {E.bulb}
+              </div>
+
+              <h2
+                className="font-black text-2xl tracking-wider mb-1"
+                style={{
+                  background:
+                    "linear-gradient(90deg, #a855f7, #6366f1, #3b82f6)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                USE A HINT?
+              </h2>
+
+              <p className="text-gray-500 dark:text-slate-400 text-sm mb-5">
+                Reveal a random letter from the word.
+              </p>
+
+              {/* Cost display */}
+              <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-2xl py-4 px-5 mb-5">
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-3xl">{E.gem}</span>
+                  <div className="text-left">
+                    <div className="font-black text-2xl text-purple-600 dark:text-purple-300">
+                      {HINT_COST}
+                    </div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-widest">
+                      diamonds
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800 flex items-center justify-between text-xs">
+                  <span className="text-gray-400 dark:text-slate-500">
+                    Your balance
+                  </span>
+                  <span
+                    className={`font-black ${canAffordHint ? "text-cyan-600 dark:text-cyan-400" : "text-red-500"}`}
+                  >
+                    {E.gem} {diamonds}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs mt-1">
+                  <span className="text-gray-400 dark:text-slate-500">
+                    Hints remaining
+                  </span>
+                  <span className="font-black text-purple-600 dark:text-purple-300">
+                    {MAX_HINTS_PER_GAME - hintsUsed} / {MAX_HINTS_PER_GAME}
+                  </span>
+                </div>
+              </div>
+
+              {/* Not enough diamonds warning */}
+              {!canAffordHint && (
+                <div
+                  className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl py-2 px-4 mb-4 text-red-500 text-xs font-bold"
+                  style={{animation: "popIn 0.25s ease forwards"}}
+                >
+                  {E.cross} Not enough diamonds! Need {HINT_COST - diamonds}{" "}
+                  more.
+                </div>
+              )}
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowHintModal(false)}
+                  className="flex-1 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 font-black text-sm hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-150 hover:scale-105 active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={useHint}
+                  disabled={!canAffordHint}
+                  className={`flex-1 h-12 rounded-2xl font-black text-sm transition-all duration-150 ${
+                    canAffordHint
+                      ? "bg-linear-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white shadow-lg shadow-purple-300/50 dark:shadow-purple-900/30 hover:scale-105 active:scale-95"
+                      : "bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed"
+                  }`}
+                >
+                  {canAffordHint
+                    ? `${E.bulb} Reveal Letter`
+                    : `${E.lock} Locked`}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ════════════════════════════════════════════════════════════════════
             RESULT OVERLAY — WIN
@@ -1004,6 +1379,42 @@ export default function App() {
                 </p>
               </div>
 
+              {/* Diamonds earned this game */}
+              {diamondsEarnedThisGame > 0 && (
+                <div
+                  className="bg-linear-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border-2 border-cyan-300 dark:border-cyan-800 rounded-2xl py-3 px-5 mb-5"
+                  style={{animation: "rewardSlide 0.5s ease 0.3s both"}}
+                >
+                  <p className="text-cyan-400 dark:text-cyan-300 text-xs uppercase tracking-widest mb-1">
+                    Diamonds earned
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span
+                      style={{
+                        fontSize: 28,
+                        animation: "diamondPop 0.6s ease 0.5s both",
+                      }}
+                    >
+                      {E.gem}
+                    </span>
+                    <span
+                      className="font-black text-3xl"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      +{diamondsEarnedThisGame}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 dark:text-slate-400 text-xs mt-1">
+                    Total: {E.gem} {diamonds}
+                  </p>
+                </div>
+              )}
+
               {/* Stats row */}
               <div className="flex justify-center gap-3 mb-6">
                 <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-xl px-4 py-2 text-center">
@@ -1140,6 +1551,27 @@ export default function App() {
                   {category}
                 </p>
               </div>
+
+              {/* Diamonds earned this game (even on loss) */}
+              {diamondsEarnedThisGame > 0 && (
+                <div
+                  className="bg-gray-900 border border-gray-700 rounded-2xl py-3 px-5 mb-5"
+                  style={{animation: "rewardSlide 0.5s ease 0.3s both"}}
+                >
+                  <p className="text-gray-500 text-xs uppercase tracking-widest mb-1">
+                    Diamonds earned
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span style={{fontSize: 24}}>{E.gem}</span>
+                    <span className="text-cyan-400 font-black text-2xl">
+                      +{diamondsEarnedThisGame}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 text-xs mt-1">
+                    Total: {E.gem} {diamonds}
+                  </p>
+                </div>
+              )}
 
               {/* Stats */}
               <div className="flex justify-center gap-3 mb-6">
