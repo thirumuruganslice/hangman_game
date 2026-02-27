@@ -255,8 +255,8 @@ const STYLES = `
   60% { transform:translateX(6px); }
   75% { transform:translateX(-3px); }
 }
-@keyframes flashRed   { 0%,100%{opacity:0;} 30%{opacity:.14;} }
-@keyframes flashGreen { 0%,100%{opacity:0;} 30%{opacity:.09;} }
+@keyframes flashRed   { 0%,100%{opacity:0;} 20%{opacity:.10;} 60%{opacity:.06;} }
+@keyframes flashGreen { 0%,100%{opacity:0;} 20%{opacity:.07;} 60%{opacity:.04;} }
 @keyframes rainbow {
   0%   { background-position:0% 50%; }
   50%  { background-position:100% 50%; }
@@ -274,19 +274,19 @@ const STYLES = `
 }
 @keyframes dangerPulse { 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
 @keyframes resultSlideIn {
-  0%   { transform:scale(0.7) translateY(40px); opacity:0; }
-  70%  { transform:scale(1.05) translateY(-4px); opacity:1; }
-  100% { transform:scale(1) translateY(0); opacity:1; }
+  0%   { transform:scale(0.92) translateY(24px); opacity:0; filter:blur(4px); }
+  60%  { transform:scale(1.01) translateY(-2px); opacity:1; filter:blur(0); }
+  100% { transform:scale(1) translateY(0); opacity:1; filter:blur(0); }
 }
 @keyframes spin      { to { transform:rotate(360deg); } }
 @keyframes floatAlt  { 0%{ transform:translateY(0); } 100%{ transform:translateY(-12px); } }
 
 /* ── Victory-specific animations ── */
 @keyframes victoryBounce {
-  0%   { transform:scale(0) rotate(-180deg); opacity:0; }
-  40%  { transform:scale(1.45) rotate(12deg); opacity:1; }
-  60%  { transform:scale(0.88) rotate(-6deg); }
-  80%  { transform:scale(1.12) rotate(4deg); }
+  0%   { transform:scale(0) rotate(-90deg); opacity:0; }
+  35%  { transform:scale(1.18) rotate(6deg); opacity:1; }
+  55%  { transform:scale(0.92) rotate(-3deg); }
+  75%  { transform:scale(1.06) rotate(1deg); }
   100% { transform:scale(1) rotate(0deg); }
 }
 @keyframes trophyFloat {
@@ -298,8 +298,8 @@ const STYLES = `
   100% { background-position: 400% center; }
 }
 @keyframes glowRing {
-  0%,100% { box-shadow:0 0 0 4px #fbbf24, 0 0 30px #f59e0b66, 0 25px 60px rgba(0,0,0,.22); }
-  50%     { box-shadow:0 0 0 5px #fde68a, 0 0 60px #fbbf2499, 0 25px 70px rgba(0,0,0,.28); }
+  0%,100% { box-shadow:0 0 0 2px rgba(251,191,36,0.4), 0 0 20px rgba(245,158,11,0.15), 0 12px 40px rgba(0,0,0,.12); }
+  50%     { box-shadow:0 0 0 3px rgba(253,230,138,0.5), 0 0 35px rgba(251,191,36,0.25), 0 12px 45px rgba(0,0,0,.15); }
 }
 @keyframes badgePop {
   0%   { transform:scale(0) rotate(-20deg); opacity:0; }
@@ -320,13 +320,13 @@ const STYLES = `
   100% { transform:scale(1.2) rotate(10deg); opacity:1; }
 }
 @keyframes backdropFade {
-  from { opacity:0; }
-  to   { opacity:1; }
+  from { opacity:0; backdrop-filter:blur(0); }
+  to   { opacity:1; backdrop-filter:blur(12px); }
 }
 @keyframes loseSlam {
-  0%   { transform:scale(2) rotate(20deg); opacity:0; }
-  50%  { transform:scale(0.9) rotate(-3deg); }
-  100% { transform:scale(1) rotate(0deg); opacity:1; }
+  0%   { transform:scale(1.6) rotate(12deg); opacity:0; filter:blur(6px); }
+  50%  { transform:scale(0.95) rotate(-2deg); opacity:1; filter:blur(0); }
+  100% { transform:scale(1) rotate(0deg); opacity:1; filter:blur(0); }
 }
 @keyframes loseShake {
   0%,100% { transform:translateX(0) rotate(0deg); }
@@ -379,6 +379,28 @@ const STYLES = `
   0%,100% { opacity:0.6; }
   50%     { opacity:1; }
 }
+@keyframes knifeSlash {
+  0%   { transform:scaleX(0) translateX(-50%); opacity:0; }
+  30%  { transform:scaleX(1) translateX(0); opacity:1; }
+  70%  { transform:scaleX(1) translateX(0); opacity:0.8; }
+  100% { transform:scaleX(0) translateX(50%); opacity:0; }
+}
+@keyframes ropeSnapFlash {
+  0%   { opacity:0; }
+  15%  { opacity:0.35; }
+  40%  { opacity:0.18; }
+  100% { opacity:0; }
+}
+@keyframes freedomDrop {
+  0%   { transform:translateY(-24px) scale(0.7) rotate(-15deg); opacity:0; }
+  55%  { transform:translateY(4px) scale(1.1) rotate(3deg); opacity:1; }
+  100% { transform:translateY(0) scale(1) rotate(0deg); opacity:1; }
+}
+@keyframes canvasPop {
+  0%   { transform:scale(1); }
+  40%  { transform:scale(1.03); }
+  100% { transform:scale(1); }
+}
 `;
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -405,6 +427,7 @@ export default function App() {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHintModal, setShowHintModal] = useState(false);
   const [hintRevealKey, setHintRevealKey] = useState(0);
+  const [ropeSnapFlash, setRopeSnapFlash] = useState(false);
   const toastRef = useRef(null);
   const comboRef = useRef(null);
   const diamondRef = useRef(null);
@@ -520,36 +543,54 @@ export default function App() {
     if (isOver && !resultShown) {
       setResultShown(true);
       setResultMsg(isWon ? pick(WIN_LINES) : pick(LOSE_LINES));
-      const t = setTimeout(() => setShowResult(true), 600);
+      // Win sequence: rope snap(~0.6s) → fall(~1.9s) → trophy(~2.6s) → dance(~3.3s)
+      // Show result panel after the full sequence
+      const t = setTimeout(() => setShowResult(true), isWon ? 4200 : 600);
 
       if (isWon) {
         soundManager.playWin();
         setScores((s) => ({...s, wins: s.wins + 1}));
         setWinStreak((s) => s + 1);
-        spawnParticles(CONFETTI_EMOJIS, 28, 50);
-        launchFireworks();
+
+        // Immediate subtle flash for tactile win feedback
         setFlashType("green");
-        setTimeout(() => setFlashType(null), 600);
+        setTimeout(() => setFlashType(null), 400);
+
+        // Rope snap flash + sound when rope breaks
+        setTimeout(() => {
+          setRopeSnapFlash(true);
+          soundManager.playRopeSnap();
+          setTimeout(() => setRopeSnapFlash(false), 700);
+        }, 600);
+
+        // Landing thud
+        setTimeout(() => soundManager.playLandingThud(), 1900);
+
+        // Trophy catch sound
+        setTimeout(() => soundManager.playTrophyCatch(), 2600);
+
+        // Big confetti + fireworks when the victory dance starts
+        setTimeout(() => {
+          spawnParticles(CONFETTI_EMOJIS, 28, 50);
+          launchFireworks();
+        }, 3300);
 
         // Win bonus diamonds
         let winBonus = REWARDS.winGame;
-        // Perfect game bonus (0 wrong guesses)
         const finalWrong = [...guessedLetters].filter(
           (l) => !word.includes(l),
         ).length;
         if (finalWrong === 0) winBonus += REWARDS.perfectGame;
-        // Streak bonus
-        // winStreak hasn't been incremented yet, so current streak is winStreak + 1
         const newStreak = winStreak + 1;
         if (newStreak >= 2) winBonus += REWARDS.streakBonus * newStreak;
         setTimeout(() => {
           setDiamonds((d) => d + winBonus);
           setDiamondsEarnedThisGame((d) => d + winBonus);
           soundManager.playBigReward();
-        }, 800);
+        }, 3500);
 
-        // second bell cascade at 4 seconds in
-        setTimeout(() => soundManager.playVictoryBells(), 4000);
+        // Victory bells during dance
+        setTimeout(() => soundManager.playVictoryBells(), 3300);
       } else {
         soundManager.playLose();
         setScores((s) => ({...s, losses: s.losses + 1}));
@@ -661,6 +702,7 @@ export default function App() {
     setDiamondPopup(null);
     setHintsUsed(0);
     setShowHintModal(false);
+    setRopeSnapFlash(false);
     setGameState(getNewGame());
   };
 
@@ -685,8 +727,23 @@ export default function App() {
         <div
           className="fixed inset-0 z-40 pointer-events-none"
           style={{
-            background: flashType === "red" ? "#ef4444" : "#22c55e",
-            animation: `${flashType === "red" ? "flashRed" : "flashGreen"} 0.4s ease forwards`,
+            background:
+              flashType === "red"
+                ? "radial-gradient(ellipse at 50% 40%, rgba(239,68,68,0.18) 0%, rgba(239,68,68,0.06) 50%, transparent 80%)"
+                : "radial-gradient(ellipse at 50% 40%, rgba(34,197,94,0.14) 0%, rgba(34,197,94,0.04) 50%, transparent 80%)",
+            animation: `${flashType === "red" ? "flashRed" : "flashGreen"} 0.5s cubic-bezier(0.4,0,0.2,1) forwards`,
+          }}
+        />
+      )}
+
+      {/* Rope-snap golden flash (fires when rope breaks) */}
+      {ropeSnapFlash && (
+        <div
+          className="fixed inset-0 z-40 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 15%, rgba(253,224,71,0.5) 0%, rgba(251,191,36,0.2) 35%, transparent 65%)",
+            animation: "ropeSnapFlash 0.8s cubic-bezier(0.4,0,0.2,1) forwards",
           }}
         />
       )}
@@ -737,16 +794,18 @@ export default function App() {
       ))}
 
       {/* ── PAGE ─────────────────────────────────────────────────────────── */}
-      <div className="min-h-screen bg-linear-to-br from-amber-50 via-orange-50 to-purple-100 dark:from-slate-950 dark:via-slate-950 dark:to-indigo-950 text-slate-900 dark:text-slate-100 flex flex-col items-center px-3 py-5 font-sans relative overflow-hidden">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-gray-950 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center px-3 py-5 font-sans relative overflow-hidden transition-colors duration-700">
         {/* Background blobs */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-orange-200/40 dark:bg-indigo-500/12 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-20 right-1/4 w-80 h-80 rounded-full bg-purple-200/40 dark:bg-fuchsia-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-orange-100/50 dark:bg-indigo-500/8 blur-3xl pointer-events-none transition-colors duration-1000" />
+        <div className="absolute bottom-20 right-1/4 w-80 h-80 rounded-full bg-purple-100/40 dark:bg-fuchsia-500/6 blur-3xl pointer-events-none transition-colors duration-1000" />
 
         {/* Toast */}
         {toastMsg && (
           <div
-            className="fixed top-5 left-1/2 z-50 -translate-x-1/2 bg-white/95 dark:bg-slate-900/95 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 font-black text-base px-6 py-2.5 rounded-2xl shadow-xl whitespace-nowrap"
-            style={{animation: "popIn 0.25s ease forwards"}}
+            className="fixed top-5 left-1/2 z-50 -translate-x-1/2 bg-white/90 dark:bg-slate-900/90 border border-gray-200/80 dark:border-slate-700/80 text-gray-800 dark:text-slate-100 font-bold text-sm px-5 py-2 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 whitespace-nowrap backdrop-blur-sm"
+            style={{
+              animation: "popIn 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards",
+            }}
           >
             {toastMsg}
           </div>
@@ -755,8 +814,11 @@ export default function App() {
         {/* Combo banner */}
         {comboMsg && (
           <div
-            className="fixed top-16 left-1/2 z-50 -translate-x-1/2 text-2xl font-black text-orange-500 drop-shadow whitespace-nowrap"
-            style={{animation: "comboZoom 1.2s ease forwards"}}
+            className="fixed top-14 left-1/2 z-50 -translate-x-1/2 text-xl font-black text-orange-500 dark:text-orange-400 whitespace-nowrap"
+            style={{
+              animation: "comboZoom 1s cubic-bezier(0.34,1.56,0.64,1) forwards",
+              textShadow: "0 2px 12px rgba(249,115,22,0.3)",
+            }}
           >
             {comboMsg}
           </div>
@@ -766,10 +828,10 @@ export default function App() {
         {diamondPopup && (
           <div
             key={diamondPopup.key}
-            className="fixed top-28 left-1/2 z-50 -translate-x-1/2 flex items-center gap-2 bg-linear-to-r from-cyan-500/90 to-blue-600/90 dark:from-cyan-600/90 dark:to-blue-700/90 text-white font-black text-base px-5 py-2.5 rounded-2xl shadow-xl whitespace-nowrap border border-cyan-300/40"
+            className="fixed top-24 left-1/2 z-50 -translate-x-1/2 flex items-center gap-1.5 bg-white/90 dark:bg-slate-800/90 text-cyan-600 dark:text-cyan-300 font-bold text-sm px-4 py-2 rounded-xl shadow-lg shadow-cyan-500/10 dark:shadow-cyan-500/5 whitespace-nowrap border border-cyan-200/60 dark:border-cyan-800/40 backdrop-blur-sm"
             style={{
               animation:
-                "diamondPop 0.35s ease forwards, diamondFloat 1.8s ease 0.4s forwards",
+                "diamondPop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards, diamondFloat 1.6s ease 0.35s forwards",
             }}
           >
             {E.gem} +{diamondPopup.amount} {diamondPopup.label}
@@ -777,22 +839,35 @@ export default function App() {
         )}
 
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
-        <header className="w-full max-w-3xl flex items-center justify-between mb-5">
+        <header className="w-full max-w-3xl flex items-center justify-between mb-4">
           <div>
             <h1
-              className="text-3xl sm:text-4xl font-black tracking-widest select-none"
+              className="text-2xl sm:text-3xl font-black tracking-wider select-none"
               style={{
                 background:
-                  "linear-gradient(90deg,#f97316,#ec4899,#a855f7,#3b82f6,#f97316)",
-                backgroundSize: "300% 300%",
+                  "linear-gradient(135deg, #1e293b 0%, #475569 50%, #1e293b 100%)",
+                backgroundSize: "200% 200%",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                animation: "rainbow 4s linear infinite",
+                animation: "rainbow 6s ease infinite",
               }}
             >
-              HANGMAN
+              <span className="dark:hidden">HANGMAN</span>
+              <span
+                className="hidden dark:inline"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #e2e8f0 0%, #94a3b8 50%, #e2e8f0 100%)",
+                  backgroundSize: "200% 200%",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  animation: "rainbow 6s ease infinite",
+                }}
+              >
+                HANGMAN
+              </span>
             </h1>
-            <p className="text-gray-400 dark:text-slate-400 text-xs tracking-widest uppercase">
+            <p className="text-gray-400 dark:text-slate-500 text-[11px] tracking-widest uppercase font-medium mt-0.5">
               {isOver
                 ? isWon
                   ? `${E.trophy} You won!`
@@ -801,40 +876,35 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Diamond counter */}
-            <div
-              className="h-9 px-3 rounded-xl border border-cyan-300 dark:border-cyan-900 text-cyan-700 dark:text-cyan-300 font-black text-xs flex items-center gap-1.5 shadow-sm"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(6,182,212,0.08), rgba(59,130,246,0.08), rgba(6,182,212,0.08))",
-                backgroundSize: "200% 100%",
-                animation: "coinShine 3s linear infinite",
-              }}
-            >
+            <div className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
               {E.gem}
-              <span className="text-sm tabular-nums">{diamonds}</span>
+              <span className="text-xs tabular-nums">{diamonds}</span>
             </div>
 
             {winStreak >= 2 && (
               <div
-                className="h-9 px-3 rounded-xl bg-amber-100 dark:bg-amber-950/40 border border-amber-400 dark:border-amber-900 text-amber-700 dark:text-amber-300 font-black text-xs flex items-center gap-1"
-                style={{animation: "streakSlide 0.5s ease forwards"}}
+                className="h-8 px-2.5 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-amber-600 dark:text-amber-400 font-bold text-xs flex items-center gap-1"
+                style={{
+                  animation:
+                    "streakSlide 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards",
+                }}
               >
                 {E.fire} {winStreak}
               </div>
             )}
 
-            <div className="h-9 px-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 font-black text-xs flex items-center gap-1">
+            <div className="h-8 px-2.5 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center gap-1">
               {E.trophy} {scores.wins}
             </div>
-            <div className="h-9 px-3 rounded-xl bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-900 text-red-600 dark:text-red-300 font-black text-xs flex items-center gap-1">
+            <div className="h-8 px-2.5 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-red-500 dark:text-red-400 font-bold text-xs flex items-center gap-1">
               {E.skull} {scores.losses}
             </div>
 
             <button
               onClick={toggleTheme}
-              className="h-9 w-9 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-sm font-black text-gray-700 dark:text-slate-200 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm"
+              className="h-8 w-8 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
               aria-label={
                 theme === "dark"
                   ? "Switch to light mode"
@@ -847,7 +917,7 @@ export default function App() {
 
             <button
               onClick={toggleSound}
-              className="h-9 w-9 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-sm text-gray-800 dark:text-slate-100 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm"
+              className="h-8 w-8 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
             >
               {soundOn ? E.loud : E.mute}
             </button>
@@ -855,31 +925,31 @@ export default function App() {
         </header>
 
         {/* ── MAIN CARD ───────────────────────────────────────────────────── */}
-        <main className="w-full max-w-3xl bg-white/95 dark:bg-slate-900/95 border border-gray-200 dark:border-slate-700 rounded-3xl p-5 sm:p-7 shadow-xl relative">
+        <main className="w-full max-w-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xl shadow-black/5 dark:shadow-black/20 relative">
           {/* Category badge */}
           <div className="flex justify-center mb-2">
-            <span className="bg-purple-100 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900 text-purple-700 dark:text-purple-300 px-5 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase">
+            <span className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 px-4 py-1 rounded-full text-[11px] font-semibold tracking-widest uppercase">
               {E.folder} {category}
             </span>
           </div>
 
           {/* Clue / Question */}
-          <div className="flex justify-center mb-5">
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl px-5 py-3 max-w-lg w-full text-center shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400 mb-1">
+          <div className="flex justify-center mb-4">
+            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-4 py-2.5 max-w-lg w-full text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
                 {E.bulb} Clue
               </p>
-              <p className="text-sm sm:text-base font-semibold text-amber-900 dark:text-amber-100 leading-snug">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 leading-snug">
                 {clue}
               </p>
             </div>
           </div>
 
           {/* Taunt bar */}
-          <div className="flex justify-center mb-4 min-h-6">
+          <div className="flex justify-center mb-3 min-h-5">
             {TAUNTS[wrongGuesses] && !isOver && (
               <p
-                className={`text-sm font-bold ${nearDeath ? "text-red-500" : "text-gray-400 dark:text-slate-400"}`}
+                className={`text-xs font-semibold ${nearDeath ? "text-red-500 dark:text-red-400" : "text-slate-400 dark:text-slate-500"}`}
                 style={
                   nearDeath ? {animation: "dangerPulse 0.8s ease infinite"} : {}
                 }
@@ -891,11 +961,29 @@ export default function App() {
 
           <div className="flex flex-col lg:flex-row gap-6 items-center lg:items-start">
             {/* LEFT: canvas + lives */}
-            <div className="flex flex-col items-center gap-3 shrink-0">
+            <div className="flex flex-col items-center gap-2.5 shrink-0">
               <div
                 key={shakeKey}
-                className="bg-gray-50 dark:bg-slate-50 border border-gray-200 dark:border-slate-200 rounded-2xl p-3 shadow-inner"
-                style={shakeKey > 0 ? {animation: "shake 0.45s ease"} : {}}
+                className={`rounded-xl p-2.5 border transition-all duration-1000 ease-in-out ${
+                  isWon
+                    ? "bg-linear-to-b from-amber-50/80 to-orange-50/40 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-300/60 dark:border-amber-700/40 shadow-lg shadow-amber-200/20 dark:shadow-amber-900/10"
+                    : isLost
+                      ? "bg-linear-to-b from-red-50/60 to-rose-50/30 dark:from-red-950/20 dark:to-red-900/10 border-red-300/40 dark:border-red-800/40 shadow-lg shadow-red-200/15 dark:shadow-red-900/10"
+                      : "bg-slate-50/80 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/50"
+                }`}
+                style={{
+                  ...(shakeKey > 0
+                    ? {
+                        animation:
+                          "shake 0.4s cubic-bezier(0.36,0.07,0.19,0.97)",
+                      }
+                    : {}),
+                  ...(isWon
+                    ? {
+                        animation: "glowRing 3s ease infinite 3.6s",
+                      }
+                    : {}),
+                }}
               >
                 <HangmanCanvas
                   wrongGuesses={wrongGuesses}
@@ -906,17 +994,17 @@ export default function App() {
 
               {/* Progress bar */}
               <div className="w-full px-1">
-                <div className="flex justify-between text-xs text-gray-400 dark:text-slate-400 mb-1">
-                  <span>Mistakes</span>
+                <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1">
+                  <span className="font-medium">Mistakes</span>
                   <span
-                    className={`font-black ${wrongGuesses >= 5 ? "text-red-500" : "text-gray-700 dark:text-slate-200"}`}
+                    className={`font-bold tabular-nums ${wrongGuesses >= 5 ? "text-red-500" : "text-slate-600 dark:text-slate-300"}`}
                   >
                     {wrongGuesses} / {MAX_WRONG}
                   </span>
                 </div>
-                <div className="h-2.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
+                    className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
                     style={{
                       width: `${progressPct}%`,
                       ...(nearDeath
@@ -925,18 +1013,16 @@ export default function App() {
                     }}
                   />
                 </div>
-                <div className="flex justify-center gap-2 mt-2">
+                <div className="flex justify-center gap-1.5 mt-1.5">
                   {Array.from({length: MAX_WRONG}, (_, i) => (
                     <div
                       key={i}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 flex items-center justify-center text-white font-black text-xs ${
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
                         i < wrongGuesses
-                          ? "bg-red-400 scale-125"
-                          : "bg-gray-200 dark:bg-slate-700"
+                          ? "bg-red-400 dark:bg-red-500 scale-110"
+                          : "bg-slate-200 dark:bg-slate-700"
                       }`}
-                    >
-                      {i < wrongGuesses ? "x" : ""}
-                    </div>
+                    />
                   ))}
                 </div>
               </div>
@@ -945,37 +1031,40 @@ export default function App() {
             {/* RIGHT: word + keyboard */}
             <div className="flex-1 w-full flex flex-col gap-5">
               {/* Word blanks */}
-              <div className="flex flex-wrap justify-center gap-2 min-h-16">
+              <div className="flex flex-wrap justify-center gap-1.5 min-h-14">
                 {word.split("").map((letter, i) => {
                   const revealed = guessedLetters.has(letter);
                   const justRevealed = revealedLetter === letter;
                   return (
-                    <div key={i} className="flex flex-col items-center gap-1">
+                    <div key={i} className="flex flex-col items-center gap-0.5">
                       <span
-                        className={`text-2xl font-black w-8 inline-block text-center ${
+                        className={`text-xl font-bold w-7 inline-block text-center transition-colors duration-300 ${
                           revealed
                             ? isLost
                               ? "text-red-500"
-                              : "text-emerald-600"
+                              : "text-slate-800 dark:text-slate-100"
                             : isLost
-                              ? "text-red-400/80"
+                              ? "text-red-400/60"
                               : "text-transparent"
                         }`}
                         style={
                           revealed && justRevealed
-                            ? {animation: "letterPop 0.35s ease forwards"}
+                            ? {
+                                animation:
+                                  "letterPop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards",
+                              }
                             : {}
                         }
                       >
                         {revealed || isLost ? letter : "?"}
                       </span>
                       <div
-                        className={`h-0.5 w-8 rounded-full transition-colors duration-300 ${
+                        className={`h-0.5 w-7 rounded-full transition-all duration-500 ${
                           revealed
                             ? isLost
                               ? "bg-red-400"
-                              : "bg-emerald-500"
-                            : "bg-gray-300 dark:bg-slate-600"
+                              : "bg-emerald-500 dark:bg-emerald-400"
+                            : "bg-slate-300 dark:bg-slate-600"
                         }`}
                       />
                     </div>
@@ -984,17 +1073,20 @@ export default function App() {
               </div>
 
               {/* Wrong letter badges */}
-              <div className="min-h-8 flex flex-wrap justify-center gap-1.5">
+              <div className="min-h-7 flex flex-wrap justify-center gap-1">
                 {wrongLetters.length > 0 && (
                   <>
-                    <span className="w-full text-center text-gray-400 dark:text-slate-400 text-xs uppercase tracking-widest">
+                    <span className="w-full text-center text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest font-medium">
                       {E.skull} Wrong guesses
                     </span>
                     {wrongLetters.map((l) => (
                       <span
                         key={l}
-                        className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-500 dark:text-red-300 px-2.5 py-0.5 rounded-md text-sm font-black"
-                        style={{animation: "popIn 0.2s ease forwards"}}
+                        className="bg-red-50 dark:bg-red-950/30 border border-red-200/70 dark:border-red-900/50 text-red-400 dark:text-red-400 px-2 py-0.5 rounded text-xs font-bold"
+                        style={{
+                          animation:
+                            "popIn 0.15s cubic-bezier(0.34,1.56,0.64,1) forwards",
+                        }}
                       >
                         {l}
                       </span>
@@ -1004,7 +1096,7 @@ export default function App() {
               </div>
 
               {/* Keyboard */}
-              <div className="flex flex-wrap justify-center gap-1.5 max-w-xs mx-auto">
+              <div className="flex flex-wrap justify-center gap-1 max-w-70 mx-auto">
                 {ALPHABET.map((letter) => {
                   const isGuessed = guessedLetters.has(letter);
                   const isCorrect = isGuessed && word.includes(letter);
@@ -1014,14 +1106,14 @@ export default function App() {
                       key={letter}
                       onClick={() => handleGuess(letter)}
                       disabled={isGuessed || isOver}
-                      className={`w-9 h-9 rounded-xl text-sm font-black transition-all duration-100 border select-none ${
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all duration-150 border select-none ${
                         isCorrect
-                          ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-900 cursor-default scale-90"
+                          ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 cursor-default scale-90 opacity-70"
                           : isWrong
-                            ? "bg-red-50 dark:bg-red-950/40 text-red-300 dark:text-red-400 border-red-100 dark:border-red-950 cursor-default opacity-40 scale-90"
+                            ? "bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border-slate-100 dark:border-slate-800 cursor-default opacity-30 scale-90"
                             : isOver
-                              ? "bg-gray-100 dark:bg-slate-800 text-gray-300 dark:text-slate-500 border-gray-200 dark:border-slate-700 cursor-default"
-                              : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 border-gray-300 dark:border-slate-600 hover:bg-purple-500 dark:hover:bg-purple-500 hover:text-white hover:border-purple-400 hover:-translate-y-1 hover:scale-110 hover:shadow-md hover:shadow-purple-200 dark:hover:shadow-purple-900/40 active:scale-90 active:translate-y-0 cursor-pointer shadow-sm"
+                              ? "bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-default"
+                              : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-700 dark:hover:bg-slate-600 hover:text-white hover:border-slate-600 dark:hover:border-slate-500 hover:-translate-y-0.5 hover:shadow-md active:scale-95 active:translate-y-0 cursor-pointer"
                       }`}
                     >
                       {letter}
@@ -1031,15 +1123,15 @@ export default function App() {
               </div>
 
               {/* Action buttons */}
-              <div className="flex justify-center gap-3 mt-1">
+              <div className="flex justify-center gap-2.5 mt-1">
                 {/* Hint button */}
                 <button
                   onClick={() => setShowHintModal(true)}
                   disabled={!canHint}
-                  className={`group h-11 px-5 rounded-2xl font-black text-sm tracking-wider shadow-lg transition-all duration-200 flex items-center gap-2 border ${
+                  className={`group h-10 px-4 rounded-xl font-bold text-xs tracking-wider transition-all duration-200 flex items-center gap-1.5 border ${
                     canHint
-                      ? "bg-linear-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white border-purple-400/30 shadow-purple-300/40 dark:shadow-purple-900/30 hover:scale-105 active:scale-95"
-                      : "bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-500 border-gray-300 dark:border-slate-700 cursor-not-allowed shadow-none"
+                      ? "bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white border-slate-700 dark:border-slate-600 shadow-md shadow-slate-900/20 hover:scale-[1.03] active:scale-[0.97]"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-not-allowed shadow-none"
                   }`}
                   title={
                     !canHint
@@ -1052,7 +1144,7 @@ export default function App() {
                   }
                 >
                   {E.bulb} HINT
-                  <span className="text-xs opacity-75">
+                  <span className="text-[10px] opacity-60">
                     ({HINT_COST}
                     {E.gem})
                   </span>
@@ -1061,7 +1153,7 @@ export default function App() {
                 {/* New game button */}
                 <button
                   onClick={startNewGame}
-                  className="group h-11 px-6 rounded-2xl bg-linear-to-r from-orange-500 to-pink-600 hover:from-orange-400 hover:to-pink-500 text-white font-black text-sm shadow-lg shadow-orange-300/60 dark:shadow-orange-900/30 hover:shadow-orange-400/60 transition-all duration-200 hover:scale-105 active:scale-95 tracking-wider flex items-center gap-1 border border-orange-400/30"
+                  className="group h-10 px-5 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs shadow-md shadow-slate-900/20 dark:shadow-black/10 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] tracking-wider flex items-center gap-1.5 border border-slate-800 dark:border-slate-200"
                 >
                   <span className="inline-block group-hover:animate-[spin_0.5s_linear]">
                     {E.refresh}
@@ -1073,7 +1165,7 @@ export default function App() {
           </div>
         </main>
 
-        <p className="mt-3 text-gray-400 dark:text-slate-500 text-xs text-center select-none">
+        <p className="mt-2.5 text-slate-400 dark:text-slate-600 text-[10px] text-center select-none font-medium">
           {E.kbd} Tip: Use your physical keyboard too!
         </p>
 
@@ -1083,7 +1175,7 @@ export default function App() {
         {showHintModal && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{animation: "backdropFade 0.2s ease forwards"}}
+            style={{animation: "backdropFade 0.25s ease forwards"}}
             onClick={(e) => {
               if (e.target === e.currentTarget) setShowHintModal(false);
             }}
@@ -1091,71 +1183,60 @@ export default function App() {
             <div
               className="absolute inset-0"
               style={{
-                background: "rgba(0,0,0,0.5)",
-                backdropFilter: "blur(4px)",
+                background: "rgba(0,0,0,0.4)",
+                backdropFilter: "blur(8px)",
               }}
             />
 
             <div
-              className="relative bg-white dark:bg-slate-900 rounded-3xl p-7 text-center max-w-sm w-full z-10 border border-gray-200 dark:border-slate-700 shadow-2xl"
+              className="relative bg-white dark:bg-slate-900 rounded-2xl p-6 text-center max-w-sm w-full z-10 border border-slate-200 dark:border-slate-700 shadow-2xl shadow-black/20"
               style={{
                 animation:
-                  "modalSlideUp 0.35s cubic-bezier(.34,1.56,.64,1) forwards",
+                  "modalSlideUp 0.3s cubic-bezier(.34,1.56,.64,1) forwards",
               }}
             >
               {/* Icon */}
-              <div
-                className="text-6xl leading-none select-none mb-3 inline-block"
-                style={{animation: "hintGlow 2s ease infinite"}}
-              >
+              <div className="text-5xl leading-none select-none mb-2 inline-block">
                 {E.bulb}
               </div>
 
-              <h2
-                className="font-black text-2xl tracking-wider mb-1"
-                style={{
-                  background:
-                    "linear-gradient(90deg, #a855f7, #6366f1, #3b82f6)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
+              <h2 className="font-bold text-xl tracking-wider mb-1 text-slate-800 dark:text-slate-100">
                 USE A HINT?
               </h2>
 
-              <p className="text-gray-500 dark:text-slate-400 text-sm mb-5">
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
                 Reveal a random letter from the word.
               </p>
 
               {/* Cost display */}
-              <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-2xl py-4 px-5 mb-5">
+              <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 mb-4">
                 <div className="flex items-center justify-center gap-3">
                   <span className="text-3xl">{E.gem}</span>
                   <div className="text-left">
-                    <div className="font-black text-2xl text-purple-600 dark:text-purple-300">
+                    <div className="font-bold text-xl text-slate-800 dark:text-slate-100">
                       {HINT_COST}
                     </div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-widest">
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                       diamonds
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800 flex items-center justify-between text-xs">
-                  <span className="text-gray-400 dark:text-slate-500">
+                <div className="mt-2.5 pt-2.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+                  <span className="text-slate-400 dark:text-slate-500">
                     Your balance
                   </span>
                   <span
-                    className={`font-black ${canAffordHint ? "text-cyan-600 dark:text-cyan-400" : "text-red-500"}`}
+                    className={`font-bold ${canAffordHint ? "text-cyan-600 dark:text-cyan-400" : "text-red-500"}`}
                   >
                     {E.gem} {diamonds}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs mt-1">
-                  <span className="text-gray-400 dark:text-slate-500">
+                  <span className="text-slate-400 dark:text-slate-500">
                     Hints remaining
                   </span>
-                  <span className="font-black text-purple-600 dark:text-purple-300">
+                  <span className="font-bold text-slate-600 dark:text-slate-300">
                     {MAX_HINTS_PER_GAME - hintsUsed} / {MAX_HINTS_PER_GAME}
                   </span>
                 </div>
@@ -1164,8 +1245,11 @@ export default function App() {
               {/* Not enough diamonds warning */}
               {!canAffordHint && (
                 <div
-                  className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl py-2 px-4 mb-4 text-red-500 text-xs font-bold"
-                  style={{animation: "popIn 0.25s ease forwards"}}
+                  className="bg-red-50 dark:bg-red-950/20 border border-red-200/70 dark:border-red-800/50 rounded-lg py-2 px-3 mb-3 text-red-500 text-xs font-medium"
+                  style={{
+                    animation:
+                      "popIn 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards",
+                  }}
                 >
                   {E.cross} Not enough diamonds! Need {HINT_COST - diamonds}{" "}
                   more.
@@ -1173,20 +1257,20 @@ export default function App() {
               )}
 
               {/* Buttons */}
-              <div className="flex gap-3">
+              <div className="flex gap-2.5">
                 <button
                   onClick={() => setShowHintModal(false)}
-                  className="flex-1 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 font-black text-sm hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-150 hover:scale-105 active:scale-95"
+                  className="flex-1 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={useHint}
                   disabled={!canAffordHint}
-                  className={`flex-1 h-12 rounded-2xl font-black text-sm transition-all duration-150 ${
+                  className={`flex-1 h-10 rounded-xl font-bold text-sm transition-all duration-150 ${
                     canAffordHint
-                      ? "bg-linear-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white shadow-lg shadow-purple-300/50 dark:shadow-purple-900/30 hover:scale-105 active:scale-95"
-                      : "bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed"
+                      ? "bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-md shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98]"
+                      : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed"
                   }`}
                 >
                   {canAffordHint
@@ -1204,23 +1288,34 @@ export default function App() {
         {showResult && isWon && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden"
-            style={{animation: "backdropFade 0.3s ease forwards"}}
+            style={{
+              animation: "backdropFade 0.4s cubic-bezier(0.4,0,0.2,1) forwards",
+            }}
             onClick={(e) => {
               if (e.target === e.currentTarget) setShowResult(false);
             }}
           >
-            {/* Golden gradient backdrop */}
+            {/* Frosted glass backdrop with warm tint */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(135deg,rgba(254,240,138,.88) 0%,rgba(251,191,36,.82) 35%,rgba(249,115,22,.75) 65%,rgba(168,85,247,.72) 100%)",
-                backdropFilter: "blur(6px)",
+                  "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(254,243,199,0.5) 30%, rgba(253,230,138,0.4) 60%, rgba(255,255,255,0.5) 100%)",
+                backdropFilter: "blur(16px) saturate(1.2)",
+              }}
+            />
+            {/* Dark mode backdrop */}
+            <div
+              className="absolute inset-0 hidden dark:block"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,27,15,0.8) 40%, rgba(15,23,42,0.85) 100%)",
+                backdropFilter: "blur(16px) saturate(1.2)",
               }}
             />
 
             {/* Confetti rain */}
-            {PIECES_DATA.map((p) => (
+            {PIECES_DATA.slice(0, 28).map((p) => (
               <div
                 key={p.id}
                 style={{
@@ -1229,21 +1324,21 @@ export default function App() {
                   top: "-30px",
                   width:
                     p.shape === "circle"
-                      ? p.size
+                      ? p.size * 0.8
                       : p.shape === "diamond"
-                        ? p.size * 0.8
-                        : p.size,
+                        ? p.size * 0.6
+                        : p.size * 0.8,
                   height:
                     p.shape === "circle"
-                      ? p.size
+                      ? p.size * 0.8
                       : p.shape === "diamond"
-                        ? p.size * 0.8
-                        : p.size * 0.45,
-                  borderRadius: p.shape === "circle" ? "50%" : "2px",
+                        ? p.size * 0.6
+                        : p.size * 0.35,
+                  borderRadius: p.shape === "circle" ? "50%" : "1px",
                   background: p.color,
                   transform: p.shape === "diamond" ? "rotate(45deg)" : "none",
                   animation: `fallDown ${p.duration}s linear ${p.delay}s infinite`,
-                  opacity: 0.88,
+                  opacity: 0.65,
                   pointerEvents: "none",
                   zIndex: 1,
                 }}
@@ -1251,15 +1346,16 @@ export default function App() {
             ))}
 
             {/* Stars in corners */}
-            {STAR_POSITIONS.map((s, i) => (
+            {STAR_POSITIONS.slice(0, 8).map((s, i) => (
               <div
                 key={i}
                 style={{
                   position: "fixed",
                   top: `${s.top}%`,
                   left: `${s.left}%`,
-                  fontSize: 16 + (i % 3) * 8,
-                  animation: `starFloat ${1.2 + (i % 4) * 0.4}s ease ${(i * 0.18) % 1}s infinite alternate`,
+                  fontSize: 12 + (i % 3) * 5,
+                  opacity: 0.4,
+                  animation: `starFloat ${1.5 + (i % 4) * 0.5}s ease ${(i * 0.2) % 1}s infinite alternate`,
                   pointerEvents: "none",
                   zIndex: 2,
                 }}
@@ -1270,23 +1366,23 @@ export default function App() {
 
             {/* ── WIN CARD ─────────────────────────────────────────────── */}
             <div
-              className="relative bg-white dark:bg-slate-950 rounded-3xl p-8 text-center max-w-md w-full z-10"
+              className="relative bg-white dark:bg-slate-900 rounded-2xl p-7 text-center max-w-md w-full z-10 border border-slate-200/80 dark:border-slate-700/80 shadow-2xl shadow-black/10 dark:shadow-black/30"
               style={{
                 animation:
-                  "resultSlideIn 0.55s cubic-bezier(.34,1.56,.64,1) forwards, glowRing 2s ease 0.6s infinite",
+                  "resultSlideIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards",
               }}
             >
-              {/* Trophy animation: bounce wrapper → float inner */}
+              {/* Trophy animation */}
               <div
                 style={{
                   animation:
-                    "victoryBounce 0.8s cubic-bezier(.34,1.56,.64,1) forwards",
+                    "victoryBounce 0.7s cubic-bezier(.34,1.56,.64,1) forwards",
                 }}
               >
                 <div
-                  className="text-8xl leading-none select-none mx-auto inline-block"
+                  className="text-7xl leading-none select-none mx-auto inline-block"
                   style={{
-                    animation: "trophyFloat 1.8s ease 0.85s infinite alternate",
+                    animation: "trophyFloat 2.5s ease 0.8s infinite alternate",
                   }}
                 >
                   {E.trophy}
@@ -1294,87 +1390,78 @@ export default function App() {
               </div>
 
               {/* Crown accent */}
-              <div className="flex justify-center gap-2 -mt-1 mb-2">
+              <div className="flex justify-center gap-1.5 -mt-1 mb-1.5">
                 <span
                   style={{
-                    fontSize: 20,
-                    animation: "starFloat 1s ease .1s infinite alternate",
+                    fontSize: 14,
+                    opacity: 0.5,
+                    animation: "starFloat 1.2s ease .1s infinite alternate",
                   }}
                 >
                   {E.sparkles}
                 </span>
                 <span
                   style={{
-                    fontSize: 22,
-                    animation: "starFloat 1s ease .3s infinite alternate",
+                    fontSize: 16,
+                    opacity: 0.6,
+                    animation: "starFloat 1.2s ease .3s infinite alternate",
                   }}
                 >
                   {E.crown}
                 </span>
                 <span
                   style={{
-                    fontSize: 20,
-                    animation: "starFloat 1s ease .2s infinite alternate",
+                    fontSize: 14,
+                    opacity: 0.5,
+                    animation: "starFloat 1.2s ease .2s infinite alternate",
                   }}
                 >
                   {E.sparkles}
                 </span>
               </div>
 
-              {/* WINNER! shimmer text */}
+              {/* WINNER! text */}
               <div
+                className="font-black tracking-wider mb-1"
                 style={{
-                  background:
-                    "linear-gradient(90deg,#f97316,#fbbf24,#f59e0b,#ec4899,#fbbf24,#f97316)",
-                  backgroundSize: "400% 100%",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  animation: "shimmer 1.8s linear infinite",
-                  fontSize: 52,
-                  fontWeight: 900,
-                  letterSpacing: "0.08em",
+                  fontSize: 36,
                   lineHeight: 1.1,
-                  marginBottom: 6,
+                  color: "#1e293b",
                 }}
               >
-                WINNER!
+                <span className="dark:hidden">WINNER!</span>
+                <span className="hidden dark:inline" style={{color: "#f1f5f9"}}>
+                  WINNER!
+                </span>
               </div>
 
               {/* Funny win message */}
-              <p className="text-gray-600 dark:text-slate-200 font-bold text-base mb-4">
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mb-4">
                 {resultMsg}
               </p>
 
               {/* Win streak badge */}
               {winStreak >= 2 && (
                 <div
-                  className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-900 text-amber-700 dark:text-amber-300 font-black text-sm px-4 py-1.5 rounded-full mb-4"
+                  className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 text-amber-600 dark:text-amber-400 font-bold text-xs px-3 py-1 rounded-full mb-3"
                   style={{
                     animation:
-                      "badgePop 0.5s cubic-bezier(.34,1.56,.64,1) forwards",
+                      "badgePop 0.4s cubic-bezier(.34,1.56,.64,1) forwards",
                   }}
                 >
-                  {E.fire} {winStreak} WIN STREAK! {E.fire}
+                  {E.fire} {winStreak} WIN STREAK {E.fire}
                 </div>
               )}
 
               {/* Word reveal box */}
-              <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-900 rounded-2xl py-3 px-5 mb-5">
-                <p className="text-gray-400 dark:text-slate-400 text-xs uppercase tracking-widest mb-0.5">
+              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-xl py-2.5 px-4 mb-4">
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest mb-0.5 font-medium">
                   You solved
                 </p>
-                <p
-                  className="font-black text-2xl tracking-widest"
-                  style={{
-                    background:
-                      "linear-gradient(90deg,#f97316,#ec4899,#a855f7)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
+                <p className="font-black text-xl tracking-widest text-slate-800 dark:text-slate-100">
                   {word}
                 </p>
-                <p className="text-purple-400 dark:text-purple-300 text-xs font-bold uppercase tracking-widest">
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] font-semibold uppercase tracking-widest">
                   {category}
                 </p>
               </div>
@@ -1382,62 +1469,54 @@ export default function App() {
               {/* Diamonds earned this game */}
               {diamondsEarnedThisGame > 0 && (
                 <div
-                  className="bg-linear-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border-2 border-cyan-300 dark:border-cyan-800 rounded-2xl py-3 px-5 mb-5"
-                  style={{animation: "rewardSlide 0.5s ease 0.3s both"}}
+                  className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-xl py-2.5 px-4 mb-4"
+                  style={{animation: "rewardSlide 0.4s ease 0.3s both"}}
                 >
-                  <p className="text-cyan-400 dark:text-cyan-300 text-xs uppercase tracking-widest mb-1">
+                  <p className="text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest mb-0.5 font-medium">
                     Diamonds earned
                   </p>
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-1.5">
                     <span
                       style={{
-                        fontSize: 28,
-                        animation: "diamondPop 0.6s ease 0.5s both",
+                        fontSize: 22,
+                        animation: "diamondPop 0.5s ease 0.5s both",
                       }}
                     >
                       {E.gem}
                     </span>
-                    <span
-                      className="font-black text-3xl"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                      }}
-                    >
+                    <span className="font-black text-2xl text-cyan-600 dark:text-cyan-400">
                       +{diamondsEarnedThisGame}
                     </span>
                   </div>
-                  <p className="text-gray-400 dark:text-slate-400 text-xs mt-1">
+                  <p className="text-slate-400 dark:text-slate-500 text-[10px] mt-0.5 font-medium">
                     Total: {E.gem} {diamonds}
                   </p>
                 </div>
               )}
 
               {/* Stats row */}
-              <div className="flex justify-center gap-3 mb-6">
-                <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-xl px-4 py-2 text-center">
-                  <div className="text-emerald-600 font-black text-xl">
+              <div className="flex justify-center gap-2 mb-5">
+                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-lg px-3 py-1.5 text-center">
+                  <div className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">
                     {correctLetters.length}
                   </div>
-                  <div className="text-gray-400 dark:text-slate-400 text-xs">
+                  <div className="text-slate-400 dark:text-slate-500 text-[10px] font-medium">
                     {E.check} correct
                   </div>
                 </div>
-                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-xl px-4 py-2 text-center">
-                  <div className="text-red-500 font-black text-xl">
+                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-lg px-3 py-1.5 text-center">
+                  <div className="text-red-500 dark:text-red-400 font-bold text-lg">
                     {wrongGuesses}
                   </div>
-                  <div className="text-gray-400 dark:text-slate-400 text-xs">
+                  <div className="text-slate-400 dark:text-slate-500 text-[10px] font-medium">
                     {E.cross} wrong
                   </div>
                 </div>
-                <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 rounded-xl px-4 py-2 text-center">
-                  <div className="text-purple-600 font-black text-xl">
+                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-lg px-3 py-1.5 text-center">
+                  <div className="text-slate-600 dark:text-slate-300 font-bold text-lg">
                     {scores.wins + scores.losses}
                   </div>
-                  <div className="text-gray-400 dark:text-slate-400 text-xs">
+                  <div className="text-slate-400 dark:text-slate-500 text-[10px] font-medium">
                     {E.gamepad} played
                   </div>
                 </div>
@@ -1446,14 +1525,14 @@ export default function App() {
               {/* Play again */}
               <button
                 onClick={startNewGame}
-                className="w-full bg-linear-to-r from-amber-400 via-orange-500 to-pink-600 hover:from-amber-300 hover:to-pink-500 text-white font-black text-lg py-3.5 rounded-2xl shadow-lg shadow-orange-300/70 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="w-full bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-base py-3 rounded-xl shadow-md shadow-slate-900/20 dark:shadow-black/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {E.rocket} Play Again
               </button>
 
               <button
                 onClick={() => setShowResult(false)}
-                className="mt-3 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 text-xs transition-colors"
+                className="mt-2 text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400 text-[11px] transition-colors font-medium"
               >
                 close
               </button>
@@ -1467,32 +1546,34 @@ export default function App() {
         {showResult && isLost && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{animation: "backdropFade 0.3s ease forwards"}}
+            style={{
+              animation: "backdropFade 0.4s cubic-bezier(0.4,0,0.2,1) forwards",
+            }}
             onClick={(e) => {
               if (e.target === e.currentTarget) setShowResult(false);
             }}
           >
-            {/* Dark red backdrop */}
+            {/* Dark frosted backdrop */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(135deg,rgba(30,0,0,.88) 0%,rgba(127,29,29,.82) 50%,rgba(60,5,40,.85) 100%)",
-                backdropFilter: "blur(6px)",
+                  "linear-gradient(135deg, rgba(15,15,15,0.75) 0%, rgba(50,10,10,0.7) 50%, rgba(15,15,15,0.75) 100%)",
+                backdropFilter: "blur(16px) saturate(0.8)",
               }}
             />
 
             {/* Skull particles in background */}
-            {PIECES_DATA.slice(0, 20).map((p) => (
+            {PIECES_DATA.slice(0, 12).map((p) => (
               <div
                 key={p.id}
                 style={{
                   position: "fixed",
                   left: `${p.left}%`,
                   top: "-20px",
-                  fontSize: p.size + 8,
+                  fontSize: p.size + 4,
                   animation: `fallDown ${p.duration + 1}s linear ${p.delay}s infinite`,
-                  opacity: 0.25,
+                  opacity: 0.12,
                   pointerEvents: "none",
                   zIndex: 1,
                 }}
@@ -1503,20 +1584,18 @@ export default function App() {
 
             {/* ── LOSE CARD ────────────────────────────────────────────── */}
             <div
-              className="relative bg-gray-950 border-2 border-red-800 rounded-3xl p-8 text-center max-w-md w-full z-10 shadow-2xl"
+              className="relative bg-slate-950 border border-red-900/40 rounded-2xl p-7 text-center max-w-md w-full z-10 shadow-2xl shadow-black/30"
               style={{
                 animation:
-                  "resultSlideIn 0.55s cubic-bezier(.34,1.56,.64,1) forwards",
-                boxShadow:
-                  "0 0 0 2px #7f1d1d, 0 0 50px rgba(239,68,68,.3), 0 25px 60px rgba(0,0,0,.6)",
+                  "resultSlideIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards",
               }}
             >
               {/* Skull */}
               <div
-                className="text-8xl leading-none select-none mb-2 inline-block"
+                className="text-7xl leading-none select-none mb-1.5 inline-block"
                 style={{
                   animation:
-                    "loseSlam 0.7s cubic-bezier(.34,1.56,.64,1) forwards, loseShake 0.5s ease 0.75s 2",
+                    "loseSlam 0.6s cubic-bezier(.34,1.56,.64,1) forwards, loseShake 0.4s ease 0.7s 2",
                 }}
               >
                 {E.skull}
@@ -1524,30 +1603,29 @@ export default function App() {
 
               {/* GAME OVER */}
               <div
-                className="font-black tracking-widest mb-2"
+                className="font-black tracking-wider mb-1.5"
                 style={{
-                  fontSize: 44,
-                  color: "#dc2626",
-                  textShadow: "0 0 20px #ef4444, 0 0 40px #dc2626",
-                  animation: "dangerPulse 1s ease infinite",
+                  fontSize: 32,
+                  color: "#ef4444",
+                  textShadow: "0 0 30px rgba(239,68,68,0.3)",
                 }}
               >
                 GAME OVER
               </div>
 
-              <p className="text-red-400 font-bold text-base mb-5">
+              <p className="text-red-400/80 font-medium text-sm mb-4">
                 {resultMsg}
               </p>
 
               {/* Word reveal */}
-              <div className="bg-red-950 border border-red-800 rounded-2xl py-3 px-5 mb-5">
-                <p className="text-red-400 text-xs uppercase tracking-widest mb-0.5">
+              <div className="bg-red-950/40 border border-red-900/30 rounded-xl py-2.5 px-4 mb-4">
+                <p className="text-red-500/60 text-[10px] uppercase tracking-widest mb-0.5 font-medium">
                   The word was
                 </p>
-                <p className="text-red-300 font-black text-2xl tracking-widest">
+                <p className="text-red-300 font-black text-xl tracking-widest">
                   {word}
                 </p>
-                <p className="text-red-600 text-xs font-bold uppercase tracking-widest">
+                <p className="text-red-700/60 text-[10px] font-semibold uppercase tracking-widest">
                   {category}
                 </p>
               </div>
@@ -1555,43 +1633,47 @@ export default function App() {
               {/* Diamonds earned this game (even on loss) */}
               {diamondsEarnedThisGame > 0 && (
                 <div
-                  className="bg-gray-900 border border-gray-700 rounded-2xl py-3 px-5 mb-5"
-                  style={{animation: "rewardSlide 0.5s ease 0.3s both"}}
+                  className="bg-slate-900/60 border border-slate-800/60 rounded-xl py-2.5 px-4 mb-4"
+                  style={{animation: "rewardSlide 0.4s ease 0.3s both"}}
                 >
-                  <p className="text-gray-500 text-xs uppercase tracking-widest mb-1">
+                  <p className="text-slate-500 text-[10px] uppercase tracking-widest mb-0.5 font-medium">
                     Diamonds earned
                   </p>
-                  <div className="flex items-center justify-center gap-2">
-                    <span style={{fontSize: 24}}>{E.gem}</span>
-                    <span className="text-cyan-400 font-black text-2xl">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span style={{fontSize: 20}}>{E.gem}</span>
+                    <span className="text-cyan-400 font-bold text-xl">
                       +{diamondsEarnedThisGame}
                     </span>
                   </div>
-                  <p className="text-gray-600 text-xs mt-1">
+                  <p className="text-slate-600 text-[10px] mt-0.5 font-medium">
                     Total: {E.gem} {diamonds}
                   </p>
                 </div>
               )}
 
               {/* Stats */}
-              <div className="flex justify-center gap-3 mb-6">
-                <div className="bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-center">
-                  <div className="text-emerald-500 font-black text-xl">
+              <div className="flex justify-center gap-2 mb-5">
+                <div className="bg-slate-900/60 border border-slate-800/60 rounded-lg px-3 py-1.5 text-center">
+                  <div className="text-emerald-500 font-bold text-lg">
                     {correctLetters.length}
                   </div>
-                  <div className="text-gray-500 text-xs">{E.check} correct</div>
+                  <div className="text-slate-600 text-[10px] font-medium">
+                    {E.check} correct
+                  </div>
                 </div>
-                <div className="bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-center">
-                  <div className="text-red-500 font-black text-xl">
+                <div className="bg-slate-900/60 border border-slate-800/60 rounded-lg px-3 py-1.5 text-center">
+                  <div className="text-red-500 font-bold text-lg">
                     {wrongGuesses}
                   </div>
-                  <div className="text-gray-500 text-xs">{E.cross} wrong</div>
+                  <div className="text-slate-600 text-[10px] font-medium">
+                    {E.cross} wrong
+                  </div>
                 </div>
-                <div className="bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-center">
-                  <div className="text-purple-400 font-black text-xl">
+                <div className="bg-slate-900/60 border border-slate-800/60 rounded-lg px-3 py-1.5 text-center">
+                  <div className="text-slate-400 font-bold text-lg">
                     {scores.wins + scores.losses}
                   </div>
-                  <div className="text-gray-500 text-xs">
+                  <div className="text-slate-600 text-[10px] font-medium">
                     {E.gamepad} played
                   </div>
                 </div>
@@ -1600,14 +1682,14 @@ export default function App() {
               {/* Try again */}
               <button
                 onClick={startNewGame}
-                className="w-full bg-linear-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-black text-lg py-3.5 rounded-2xl shadow-lg shadow-red-900/60 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="w-full bg-red-600 hover:bg-red-500 text-white font-bold text-base py-3 rounded-xl shadow-md shadow-red-900/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {E.refresh} Try Again
               </button>
 
               <button
                 onClick={() => setShowResult(false)}
-                className="mt-3 text-gray-600 hover:text-gray-400 text-xs transition-colors"
+                className="mt-2 text-slate-600 hover:text-slate-400 text-[11px] transition-colors font-medium"
               >
                 close
               </button>

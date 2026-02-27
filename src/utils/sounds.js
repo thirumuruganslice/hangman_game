@@ -214,6 +214,35 @@ class SoundManager {
     );
     this._tone(2637, 0.3, "triangle", 0.15, 0.35);
   }
+
+  // Rope snap: high tension release with sparkle cascade
+  playRopeSnap() {
+    this._noise(0.12, 0.35, 0);
+    this._tone(800, 0.04, "square", 0.3, 0);
+    this._tone(400, 0.08, "sawtooth", 0.25, 0.03);
+    this._tone(200, 0.15, "sine", 0.22, 0.06);
+    [2000, 2400, 2800, 3200].forEach((f, i) =>
+      this._tone(f, 0.06, "sine", 0.12, 0.08 + i * 0.04)
+    );
+  }
+
+  // Landing thud: satisfying impact
+  playLandingThud() {
+    this._tone(60, 0.2, "sine", 0.35, 0);
+    this._tone(80, 0.15, "sine", 0.25, 0.02);
+    this._noise(0.08, 0.2, 0);
+    this._tone(120, 0.08, "square", 0.12, 0.05);
+  }
+
+  // Trophy catch: magical ascending chime
+  playTrophyCatch() {
+    const notes = [523, 659, 784, 1047, 1319, 1568];
+    notes.forEach((f, i) => this._tone(f, 0.15, "sine", 0.2, i * 0.08));
+    this._tone(2093, 0.4, "triangle", 0.15, 0.5);
+    [2637, 3136, 3520].forEach((f, i) =>
+      this._tone(f, 0.08, "sine", 0.1, 0.55 + i * 0.05)
+    );
+  }
 }
 
 export const soundManager = new SoundManager();

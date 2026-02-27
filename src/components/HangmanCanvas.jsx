@@ -1364,6 +1364,457 @@ function drawTombstone(ctx, t) {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  WIN SEQUENCE HELPERS
+// ══════════════════════════════════════════════════════════════
+
+function easeOutCubic(t) {
+  const c = Math.max(0, Math.min(1, t));
+  return 1 - Math.pow(1 - c, 3);
+}
+
+// ── Spinning throwing knife ──────────────────────────────────
+function drawKnifeShape(ctx, x, y, angle) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  // Motion trail glow
+  ctx.save();
+  for (let i = 1; i <= 5; i++) {
+    ctx.globalAlpha = 0.15 - i * 0.025;
+    ctx.translate(-9, 0);
+    ctx.fillStyle = "#fbbf24";
+    ctx.shadowColor = "#f59e0b";
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11 - i * 1.5, 2.5, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+
+  // Blade
+  const bg = ctx.createLinearGradient(-4, -4, 20, 0);
+  bg.addColorStop(0, "#94a3b8");
+  bg.addColorStop(0.5, "#f1f5f9");
+  bg.addColorStop(1, "#cbd5e1");
+  ctx.fillStyle = bg;
+  ctx.shadowColor = "#7dd3fc";
+  ctx.shadowBlur = 16;
+  ctx.beginPath();
+  ctx.moveTo(20, 0);
+  ctx.lineTo(-4, -4.5);
+  ctx.lineTo(-4, 4.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Blade gleam
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.moveTo(18, -0.5);
+  ctx.lineTo(-2, -3.5);
+  ctx.lineTo(1, -1);
+  ctx.closePath();
+  ctx.fill();
+
+  // Guard
+  ctx.fillStyle = "#b45309";
+  ctx.shadowColor = "#92400e";
+  ctx.shadowBlur = 5;
+  ctx.beginPath();
+  ctx.roundRect(-7, -6, 5, 12, 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(251,191,36,0.55)";
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.roundRect(-6, -5, 2, 5, 1);
+  ctx.fill();
+
+  // Handle
+  const hg = ctx.createLinearGradient(-24, -4, -4, 4);
+  hg.addColorStop(0, "#1c0a00");
+  hg.addColorStop(0.45, "#7c3f0a");
+  hg.addColorStop(1, "#1c0a00");
+  ctx.fillStyle = hg;
+  ctx.shadowColor = "#000";
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.roundRect(-24, -4.5, 18, 9, 3);
+  ctx.fill();
+
+  // Grip wraps
+  ctx.strokeStyle = "rgba(0,0,0,0.55)";
+  ctx.lineWidth = 1;
+  ctx.shadowBlur = 0;
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(-21 + i * 4, -4.5);
+    ctx.lineTo(-21 + i * 4, 4.5);
+    ctx.stroke();
+  }
+
+  // Pommel
+  ctx.fillStyle = "#b45309";
+  ctx.shadowColor = "#92400e";
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+  ctx.arc(-23, 0, 3.5, 0, TAU);
+  ctx.fill();
+
+  // Rivet
+  ctx.fillStyle = "#fbbf24";
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.arc(-14, 0, 1.5, 0, TAU);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ── Rope-cut sparks + upper stub ────────────────────────────
+function drawCutRopeEffect(ctx, cutX, cutY, elapsed) {
+  if (elapsed < 0) return;
+  ctx.save();
+
+  // Upper rope stub still attached to gallows (jitters then settles)
+  const jitter = Math.max(0, 1 - elapsed / 0.35);
+  const jx = Math.sin(elapsed * 80) * jitter * 2.5;
+  glow(ctx, C.rope, 2.5, 6);
+  ctx.beginPath();
+  ctx.moveTo(A.ropeTop.x, A.ropeTop.y);
+  ctx.lineTo(cutX + jx, cutY + 4);
+  ctx.stroke();
+
+  // Tiny knot stub
+  ctx.beginPath();
+  ctx.arc(cutX + jx, cutY + 4, 4, 0, TAU);
+  ctx.stroke();
+
+  // Sparks explosion at cut point
+  const sparkDur = 0.55;
+  if (elapsed < sparkDur) {
+    const sp = elapsed / sparkDur;
+
+    // Flash burst
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, (1 - sp * 2.5) * 0.9);
+    ctx.fillStyle = "#fde047";
+    ctx.shadowColor = "#fbbf24";
+    ctx.shadowBlur = 24;
+    ctx.beginPath();
+    ctx.arc(cutX, cutY, 7 + sp * 5, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+
+    // Flying spark particles
+    const cols = ["#fbbf24", "#f97316", "#fde047", "#ef4444", "#fff"];
+    for (let i = 0; i < 14; i++) {
+      const angle = (i / 14) * TAU + elapsed * 3;
+      const dist = sp * 30 + (i % 3) * 5;
+      ctx.globalAlpha = Math.max(0, 1 - sp * 1.6);
+      ctx.fillStyle = cols[i % cols.length];
+      ctx.shadowColor = "#f59e0b";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(
+        cutX + Math.cos(angle) * dist,
+        cutY + Math.sin(angle) * dist * 0.55,
+        1.2 + (i % 3) * 0.6,
+        0,
+        TAU,
+      );
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+}
+
+// ── Win speech bubble ────────────────────────────────────────
+function drawWinSpeechBubble(ctx, cx, cy, text) {
+  ctx.save();
+  ctx.font = "bold 10.5px system-ui, sans-serif";
+  const tw = ctx.measureText(text).width;
+  const pw = tw + 20;
+  const ph = 26;
+  const bx = cx + 36;
+  const by = cy - 46;
+  const wobble = Math.sin(performance.now() / 280) * 1.5;
+
+  fill(ctx, C.bubble, 4);
+  [
+    [cx + 17, cy - 17, 3],
+    [cx + 23, cy - 26, 4],
+    [cx + 29, cy - 34, 5],
+  ].forEach(([dx, dy, dr]) => {
+    ctx.beginPath();
+    ctx.arc(dx, dy, dr, 0, TAU);
+    ctx.fill();
+  });
+
+  ctx.shadowColor = "rgba(253,224,71,0.45)";
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = "#fefce8";
+  ctx.beginPath();
+  ctx.roundRect(bx - pw / 2, by - ph / 2 + wobble, pw, ph, 12);
+  ctx.fill();
+
+  ctx.strokeStyle = "#fde047";
+  ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.roundRect(bx - pw / 2, by - ph / 2 + wobble, pw, ph, 12);
+  ctx.stroke();
+
+  ctx.fillStyle = "#1e293b";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, bx, by + wobble);
+  ctx.restore();
+}
+
+// ── Right-arm catch & self-cut animation ────────────────────
+function drawWinCatchCut(ctx, t, bodyInfo, elapsedTotal, timings) {
+  const {neckY} = bodyInfo;
+  const shoulderY = neckY + 23;
+  const sx = A.headCtr.x; // no swing offset during win pre-cut
+
+  const {KNIFE_CATCH, ARM_AT_ROPE, ROPE_CUT} = timings;
+
+  // Compute arm endpoint — smoothly animated per phase
+  let endX, endY;
+  if (elapsedTotal < KNIFE_CATCH) {
+    // Arm twitches with anticipation while knife is incoming
+    const twitch = Math.sin(elapsedTotal * 14) * 1.8;
+    endX = A.rArm.x + twitch;
+    endY = A.rArm.y + twitch * 0.4;
+  } else if (elapsedTotal < ARM_AT_ROPE) {
+    // Arm raises smoothly from catch pos to the rope
+    const p = easeOutCubic(
+      Math.min(1, (elapsedTotal - KNIFE_CATCH) / (ARM_AT_ROPE - KNIFE_CATCH)),
+    );
+    endX = lerp(A.rArm.x, A.ropeTop.x + 6, p);
+    endY = lerp(A.rArm.y, A.ropeTop.y + 16, p);
+  } else {
+    // Arm at rope — small vibration during cutting
+    const vib =
+      elapsedTotal < ROPE_CUT + 0.25 ? Math.sin(elapsedTotal * 85) * 1.8 : 0;
+    endX = A.ropeTop.x + 6 + vib;
+    endY = A.ropeTop.y + 16;
+  }
+
+  // Draw the animated right arm
+  ctx.save();
+  glow(ctx, C.arm, 3.5, 8);
+  ctx.beginPath();
+  ctx.moveTo(sx, shoulderY);
+  ctx.quadraticCurveTo(sx + 16, shoulderY + 18, endX, endY);
+  ctx.stroke();
+  drawHand(ctx, endX + 3, endY + 2, t, 0, 1);
+  ctx.restore();
+
+  // Knife in hand — angle transitions from caught → pointing at rope
+  if (elapsedTotal >= KNIFE_CATCH) {
+    const p2 = easeOutCubic(
+      Math.min(1, (elapsedTotal - KNIFE_CATCH) / (ARM_AT_ROPE - KNIFE_CATCH)),
+    );
+    const kAngle = lerp(Math.PI * 0.55, -Math.PI * 0.72, p2);
+    const vib2 =
+      elapsedTotal >= ARM_AT_ROPE && elapsedTotal < ROPE_CUT + 0.25
+        ? Math.sin(elapsedTotal * 85) * 0.07
+        : 0;
+    drawKnifeShape(ctx, endX, endY - 3, kAngle + vib2);
+  }
+}
+
+// ── Knife falling after rope cut ────────────────────────────
+function drawFallingKnife(ctx, elapsed, startX, startY) {
+  if (elapsed < 0 || elapsed > 2.8) return;
+  const ky = startY + 50 * elapsed + 0.5 * 420 * elapsed * elapsed;
+  if (ky > H + 40) return;
+  const kx = startX + Math.sin(elapsed * 4) * 5;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, 1 - elapsed * 0.7);
+  drawKnifeShape(ctx, kx, ky, elapsed * 9);
+  ctx.restore();
+}
+
+// ── Falling man (rope snapped — same proportions as hanging) ─
+function drawWinFall(ctx, t, fallElapsed, wrongGuesses) {
+  const FALL_DUR = 1.2;
+  const fp = Math.min(1, fallElapsed / FALL_DUR);
+
+  // ── Derive proportions from the actual hanging-man formulas ──
+  const wg = Math.max(1, wrongGuesses);
+  const ropeEnd = 74 + wg * 1.2;
+  const hangHY = ropeEnd + A.headR + 3; // head centre  ≈107
+  const hangNY = ropeEnd + A.headR * 2 + 4; // neck         ≈132
+  const hangIPY = hangNY + 83; // hip          ≈215
+  const hangCOM = (hangHY + hangIPY) / 2; // centre mass  ≈161
+  const legExt = A.lLeg.y - hangIPY; // leg segment  ≈50
+
+  // Offsets relative to centre of mass (consistent across all phases)
+  const HY = hangHY - hangCOM; // head   ≈ -54
+  const NY = hangNY - hangCOM; // neck   ≈ -29
+  const IY = hangIPY - hangCOM; // hip    ≈  54
+  const SY = NY + 23; // shoulder ≈ -6
+  const AY = A.lArm.y - hangCOM; // arm ends ≈ +24
+  const LAX = A.lArm.x - BASE_X; // ≈ -42
+  const RAX = A.rArm.x - BASE_X; // ≈ +42
+  const LLX = A.lLeg.x - BASE_X; // ≈ -40
+  const RLX = A.rLeg.x - BASE_X; // ≈ +40
+
+  // Land so feet sit at y ≈ 318
+  const LAND_COM = 318 - IY - legExt; // ≈ 214
+
+  // Centre-of-mass during fall (gravity ease-in) + landing bounce
+  let comY;
+  if (fp < 1) {
+    comY = lerp(hangCOM, LAND_COM, fp * fp * fp);
+  } else {
+    const lt = fallElapsed - FALL_DUR;
+    const bounce = 14 * Math.exp(-lt * 5.5) * Math.abs(Math.sin(lt * 14));
+    comY = LAND_COM - bounce;
+  }
+
+  // One clean spin during fall; upright on landing
+  const rotation = fp < 1 ? TAU * fp : 0;
+
+  ctx.save();
+  ctx.translate(BASE_X, comY);
+  ctx.rotate(rotation);
+
+  // ── Head ──
+  glow(ctx, C.head, 4, 12);
+  ctx.beginPath();
+  ctx.arc(0, HY, A.headR, 0, TAU);
+  ctx.stroke();
+
+  // Happy face — same as when hanging, eyes open ✨
+  fill(ctx, C.head, 4);
+  ctx.beginPath();
+  ctx.arc(-7, HY - 4, 3, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(7, HY - 4, 3, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = "#1e293b";
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.arc(-7, HY - 4, 1.4, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(7, HY - 4, 1.4, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.8)";
+  ctx.beginPath();
+  ctx.arc(-8, HY - 5, 1, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(6, HY - 5, 1, 0, TAU);
+  ctx.fill();
+  glow(ctx, C.head, 2.5, 6);
+  ctx.beginPath();
+  ctx.arc(0, HY + 5, 9, 0.12, Math.PI - 0.12);
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.shadowBlur = 0;
+  ctx.fillRect(-5, HY + 8, 10, 3);
+
+  // ── Body ──
+  glow(ctx, C.body, 4, 10);
+  ctx.beginPath();
+  ctx.moveTo(0, NY);
+  ctx.lineTo(0, IY);
+  ctx.stroke();
+  const beat = 1 + Math.sin(t * 14) * 0.35;
+  ctx.save();
+  ctx.translate(-7, NY + 20);
+  ctx.scale(beat, beat);
+  fill(ctx, C.heart, 10);
+  ctx.font = "13px serif";
+  ctx.fillText("♥", 0, 0);
+  ctx.restore();
+
+  // ── Arms — flail while falling, V-pose once landed ──
+  glow(ctx, C.arm, 3.5, 8);
+  if (fp < 1) {
+    const fl = Math.sin(fallElapsed * 14) * 18;
+    const fr = Math.cos(fallElapsed * 14) * 18;
+    ctx.beginPath();
+    ctx.moveTo(0, SY);
+    ctx.quadraticCurveTo(-20, SY + 8, LAX + fl * 0.4, HY + fl * 0.3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, SY);
+    ctx.quadraticCurveTo(20, SY + 8, RAX + fr * 0.4, HY + fr * 0.3);
+    ctx.stroke();
+    fill(ctx, C.hand, 5);
+    ctx.beginPath();
+    ctx.arc(LAX + fl * 0.4, HY + fl * 0.3, 5, 0, TAU);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(RAX + fr * 0.4, HY + fr * 0.3, 5, 0, TAU);
+    ctx.fill();
+  } else {
+    const lt = Math.min(1, (fallElapsed - FALL_DUR) / 0.45);
+    const armLx = lerp(LAX, -28, easeOutCubic(lt));
+    const armRx = lerp(RAX, 28, easeOutCubic(lt));
+    const armY = lerp(AY, HY - 22, easeOutCubic(lt));
+    ctx.beginPath();
+    ctx.moveTo(0, SY);
+    ctx.quadraticCurveTo(-20, SY + 5, armLx, armY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, SY);
+    ctx.quadraticCurveTo(20, SY + 5, armRx, armY);
+    ctx.stroke();
+    fill(ctx, C.hand, 5);
+    ctx.beginPath();
+    ctx.arc(armLx, armY, 5, 0, TAU);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(armRx, armY, 5, 0, TAU);
+    ctx.fill();
+  }
+
+  // ── Legs — kick while falling, stand/squat once landed ──
+  glow(ctx, C.leg, 3.5, 8);
+  if (fp < 1) {
+    const kl = Math.sin(fallElapsed * 16) * 22;
+    const kr = Math.cos(fallElapsed * 16) * 22;
+    ctx.beginPath();
+    ctx.moveTo(0, IY);
+    ctx.quadraticCurveTo(-14, IY + legExt * 0.55, LLX + kl * 0.4, IY + legExt);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, IY);
+    ctx.quadraticCurveTo(14, IY + legExt * 0.55, RLX + kr * 0.4, IY + legExt);
+    ctx.stroke();
+    drawShoe(ctx, LLX + kl * 0.3, IY + legExt + 3, -0.25, t, 0);
+    drawShoe(ctx, RLX + kr * 0.3, IY + legExt + 3, 0.25, t, 0);
+  } else {
+    const lt = fallElapsed - FALL_DUR;
+    const stand = Math.max(0, Math.min(1, (lt - 0.1) / 0.32));
+    const spread = lerp(Math.abs(LLX), 13, easeOutCubic(stand));
+    ctx.beginPath();
+    ctx.moveTo(0, IY);
+    ctx.quadraticCurveTo(-12, IY + legExt * 0.55, -spread, IY + legExt);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, IY);
+    ctx.quadraticCurveTo(12, IY + legExt * 0.55, spread, IY + legExt);
+    ctx.stroke();
+    drawShoe(ctx, -spread - 4, IY + legExt + 3, -0.25, t, 0);
+    drawShoe(ctx, spread + 4, IY + legExt + 3, 0.25, t, 0);
+  }
+
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
 //  WAITING IDLE (0 wrong guesses) — man waiting on platform
 // ══════════════════════════════════════════════════════════════
 function drawIdleWaiting(ctx, t) {
@@ -1450,6 +1901,517 @@ function drawIdleWaiting(ctx, t) {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  NEW WIN ANIMATION — Rope snap → Jump → Trophy → Celebrate
+// ══════════════════════════════════════════════════════════════
+
+// ── Golden trophy shape ──────────────────────────────────────
+function drawTrophyGolden(ctx, x, y, t) {
+  ctx.save();
+  const glow$ = 0.7 + Math.sin(t * 3) * 0.3;
+
+  // Aura
+  const aura = ctx.createRadialGradient(x, y - 2, 3, x, y - 2, 26);
+  aura.addColorStop(0, `rgba(251,191,36,${glow$ * 0.3})`);
+  aura.addColorStop(1, "rgba(251,191,36,0)");
+  ctx.fillStyle = aura;
+  ctx.fillRect(x - 32, y - 28, 64, 52);
+
+  ctx.shadowColor = "#fbbf24";
+  ctx.shadowBlur = 14 * glow$;
+
+  // Cup body
+  const cupGrad = ctx.createLinearGradient(x - 13, y - 16, x + 13, y + 4);
+  cupGrad.addColorStop(0, "#fde68a");
+  cupGrad.addColorStop(0.35, "#fbbf24");
+  cupGrad.addColorStop(0.7, "#f59e0b");
+  cupGrad.addColorStop(1, "#d97706");
+  ctx.fillStyle = cupGrad;
+  ctx.beginPath();
+  ctx.moveTo(x - 13, y - 16);
+  ctx.lineTo(x + 13, y - 16);
+  ctx.lineTo(x + 9, y);
+  ctx.quadraticCurveTo(x, y + 4, x - 9, y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Rim highlight
+  ctx.strokeStyle = "#fef3c7";
+  ctx.lineWidth = 1;
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.moveTo(x - 12, y - 15);
+  ctx.lineTo(x + 12, y - 15);
+  ctx.stroke();
+
+  // Handles
+  ctx.strokeStyle = "#f59e0b";
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = "#f59e0b";
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+  ctx.arc(x - 14, y - 8, 5.5, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x + 14, y - 8, 5.5, Math.PI * 0.5, -Math.PI * 0.5);
+  ctx.stroke();
+
+  // Stem
+  ctx.fillStyle = "#f59e0b";
+  ctx.shadowBlur = 4;
+  ctx.fillRect(x - 2, y + 2, 4, 8);
+
+  // Base
+  ctx.fillStyle = "#d97706";
+  ctx.shadowBlur = 3;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 12, 9, 3, 0, 0, TAU);
+  ctx.fill();
+
+  // Star emblem
+  ctx.fillStyle = "#fef3c7";
+  ctx.shadowColor = "#fde047";
+  ctx.shadowBlur = 8;
+  drawMiniStar(ctx, x, y - 7, 4);
+
+  // Gleam
+  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.ellipse(x - 5, y - 12, 1.5, 6, 0.25, 0, TAU);
+  ctx.fill();
+
+  // Orbiting sparkles
+  for (let i = 0; i < 4; i++) {
+    const angle = (t * 2 + (i * Math.PI) / 2) % TAU;
+    const dist = 20 + Math.sin(t * 3 + i) * 3;
+    const sx = x + Math.cos(angle) * dist;
+    const sy = y - 3 + Math.sin(angle) * dist * 0.5;
+    ctx.save();
+    ctx.globalAlpha = 0.5 + Math.sin(t * 5 + i * 2) * 0.3;
+    ctx.fillStyle = "#fde047";
+    ctx.shadowColor = "#fbbf24";
+    ctx.shadowBlur = 5;
+    drawMiniStar(ctx, sx, sy, 2.5);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+// ── Rope glow before snap ────────────────────────────────────
+function drawRopeGlow(ctx, ropeX, topY, botY, progress, t) {
+  if (progress <= 0) return;
+  ctx.save();
+  const intensity = Math.min(1, progress);
+  const shimmer = 0.7 + Math.sin(t * 18) * 0.3;
+
+  // Radial glow
+  const midY = (topY + botY) / 2;
+  const grad = ctx.createRadialGradient(
+    ropeX,
+    midY,
+    2,
+    ropeX,
+    midY,
+    18 + intensity * 18,
+  );
+  grad.addColorStop(0, `rgba(251,191,36,${intensity * shimmer * 0.5})`);
+  grad.addColorStop(1, "rgba(251,191,36,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(ropeX - 40, topY - 5, 80, botY - topY + 10);
+
+  // Vibrating golden overlay
+  if (intensity > 0.25) {
+    ctx.strokeStyle = "#fde047";
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = intensity * 0.5;
+    ctx.shadowColor = "#fbbf24";
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(ropeX, topY);
+    for (let yy = topY; yy <= botY; yy += 2) {
+      ctx.lineTo(ropeX + Math.sin(t * 35 + yy * 0.6) * intensity * 3.5, yy);
+    }
+    ctx.stroke();
+  }
+
+  // Rising particles
+  const np = Math.floor(intensity * 12);
+  for (let i = 0; i < np; i++) {
+    const ropeLen = botY - topY;
+    const py = botY - ((t * 45 + i * (ropeLen / np)) % (ropeLen + 20));
+    if (py < topY - 10 || py > botY + 5) continue;
+    const px = ropeX + Math.sin(t * 4.5 + i * 1.4) * (3 + intensity * 6);
+    const aDist = Math.abs(py - midY) / (ropeLen / 2);
+    ctx.globalAlpha = Math.max(0, (1 - aDist) * intensity * 0.7);
+    ctx.fillStyle = i % 2 === 0 ? "#fde047" : "#fbbf24";
+    ctx.shadowColor = "#f59e0b";
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.arc(px, py, 1.2 + Math.sin(t * 6 + i) * 0.4, 0, TAU);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ── Rope snap particle explosion ─────────────────────────────
+function drawRopeSnapParticles(ctx, snapX, snapY, elapsed) {
+  if (elapsed < 0) return;
+  ctx.save();
+
+  // Upper rope stub with jitter
+  const jitter = Math.max(0, 1 - elapsed / 0.4) * 3;
+  const jx = Math.sin(elapsed * 65) * jitter;
+  glow(ctx, C.rope, 2.5, 6);
+  ctx.beginPath();
+  ctx.moveTo(A.ropeTop.x, A.ropeTop.y);
+  ctx.lineTo(snapX + jx, snapY + 5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(snapX + jx, snapY + 5, 3.5, 0, TAU);
+  ctx.stroke();
+
+  // Flash burst
+  if (elapsed < 0.35) {
+    const fp = elapsed / 0.35;
+    ctx.globalAlpha = Math.max(0, (1 - fp * 2.5) * 0.7);
+    ctx.fillStyle = "#fde047";
+    ctx.shadowColor = "#fbbf24";
+    ctx.shadowBlur = 30;
+    ctx.beginPath();
+    ctx.arc(snapX, snapY, 8 + fp * 18, 0, TAU);
+    ctx.fill();
+  }
+
+  // Flying sparks
+  if (elapsed < 0.65) {
+    const sp = elapsed / 0.65;
+    const cols = [
+      "#fbbf24",
+      "#f97316",
+      "#fde047",
+      "#ef4444",
+      "#fff",
+      "#fef3c7",
+    ];
+    for (let i = 0; i < 18; i++) {
+      const angle = (i / 18) * TAU + elapsed * 5;
+      const dist = sp * 38 + (i % 4) * 5;
+      ctx.globalAlpha = Math.max(0, 1 - sp * 1.6);
+      ctx.fillStyle = cols[i % cols.length];
+      ctx.shadowColor = "#f59e0b";
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(
+        snapX + Math.cos(angle) * dist,
+        snapY + Math.sin(angle) * dist * 0.55,
+        1.2 + (i % 3) * 0.5,
+        0,
+        TAU,
+      );
+      ctx.fill();
+    }
+  }
+
+  // Rope fiber fragments
+  if (elapsed < 0.5) {
+    const rp = elapsed / 0.5;
+    ctx.strokeStyle = C.rope;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = Math.max(0, 1 - rp * 1.5);
+    ctx.shadowBlur = 0;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * TAU;
+      const dx = Math.cos(angle) * rp * 18;
+      const dy = Math.sin(angle) * rp * 12 - rp * 5;
+      ctx.beginPath();
+      ctx.moveTo(snapX + dx - 2, snapY + dy);
+      ctx.lineTo(snapX + dx + 2, snapY + dy + 1.5);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+// ── Impact dust ring on landing ──────────────────────────────
+function drawImpactDust(ctx, cx, groundY, elapsed) {
+  if (elapsed < 0 || elapsed > 0.8) return;
+  ctx.save();
+  const ep = elapsed / 0.8;
+
+  // Expanding ring
+  ctx.globalAlpha = Math.max(0, (1 - ep * 1.2) * 0.5);
+  ctx.strokeStyle = "rgba(148,163,184,0.6)";
+  ctx.lineWidth = Math.max(0.5, 2.5 - ep * 2);
+  ctx.shadowColor = "rgba(148,163,184,0.2)";
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+  ctx.ellipse(cx, groundY, ep * 45, ep * 7, 0, 0, TAU);
+  ctx.stroke();
+
+  // Secondary ring
+  if (ep > 0.1) {
+    const ep2 = (ep - 0.1) / 0.9;
+    ctx.globalAlpha = Math.max(0, (1 - ep2 * 1.4) * 0.3);
+    ctx.beginPath();
+    ctx.ellipse(cx, groundY, ep2 * 35, ep2 * 5, 0, 0, TAU);
+    ctx.stroke();
+  }
+
+  // Dust puffs
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI + Math.PI;
+    const dist = ep * (28 + (i % 3) * 8);
+    const px = cx + Math.cos(angle + Math.PI) * dist;
+    const py = groundY - Math.abs(Math.sin(angle)) * dist * 0.4 - ep * 6;
+    ctx.globalAlpha = Math.max(0, 0.4 - ep * 0.5);
+    ctx.fillStyle = "rgba(148,163,184,0.4)";
+    ctx.shadowBlur = 2;
+    ctx.beginPath();
+    ctx.arc(px, py, Math.max(0.5, 2.5 - ep * 2), 0, TAU);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ── Trophy descending from above ─────────────────────────────
+function drawTrophyDescending(ctx, cx, targetY, elapsed, t) {
+  const DESCENT_DUR = 0.55;
+  const dp = Math.min(1, elapsed / DESCENT_DUR);
+  const ep = easeOutCubic(dp);
+
+  const startY = -40;
+  const currentY = lerp(startY, targetY, ep);
+
+  ctx.save();
+
+  // Golden trail
+  if (dp < 1) {
+    for (let i = 0; i < 6; i++) {
+      const trailY = currentY - (i + 1) * 10;
+      if (trailY < startY) continue;
+      ctx.globalAlpha = (0.35 - i * 0.06) * (1 - dp * 0.5);
+      ctx.fillStyle = "#fbbf24";
+      ctx.shadowColor = "#f59e0b";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(cx + Math.sin(t * 5 + i) * 2, trailY, 2.5 - i * 0.3, 0, TAU);
+      ctx.fill();
+    }
+  }
+
+  // Arrival sparkle burst
+  if (dp >= 0.9 && elapsed < DESCENT_DUR + 0.5) {
+    const bp = (elapsed - DESCENT_DUR * 0.9) / 0.5;
+    ctx.globalAlpha = Math.max(0, (1 - bp * 2) * 0.6);
+    ctx.fillStyle = "#fde047";
+    ctx.shadowColor = "#fbbf24";
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(cx, targetY - 4, bp * 22, 0, TAU);
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = dp > 0.05 ? 1 : dp / 0.05;
+  drawTrophyGolden(ctx, cx, currentY, t);
+
+  ctx.restore();
+}
+
+// ── Victory celebration dance with trophy ────────────────────
+function drawVictoryCelebration(ctx, t) {
+  ctx.save();
+  const cx = BASE_X;
+  const groundY = 318;
+  const dance = Math.sin(t * 5) * 8;
+  const bounce = Math.abs(Math.sin(t * 4)) * 10;
+
+  // Stage glow
+  const stageGrad = ctx.createRadialGradient(cx, groundY, 5, cx, groundY, 60);
+  stageGrad.addColorStop(0, "rgba(251,191,36,0.2)");
+  stageGrad.addColorStop(1, "rgba(251,191,36,0)");
+  ctx.fillStyle = stageGrad;
+  ctx.fillRect(cx - 70, groundY - 8, 140, 20);
+
+  // Disco floor
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  for (let i = 0; i < 6; i++) {
+    const x = 140 + i * 22;
+    const hue = (t * 60 + i * 40) % 360;
+    ctx.fillStyle = `hsl(${hue}, 80%, 60%)`;
+    ctx.fillRect(x, 310, 18, 12);
+  }
+  ctx.restore();
+
+  // Sparkle trail
+  for (let i = 0; i < 5; i++) {
+    const delay = i * 0.12;
+    const trailT = t - delay;
+    const tx = cx + Math.sin(trailT * 5) * 8 * 0.3;
+    const ty = 160 - Math.abs(Math.sin(trailT * 4)) * 10;
+    ctx.save();
+    ctx.globalAlpha = 0.3 - i * 0.06;
+    ctx.fillStyle = C.conf[i % C.conf.length];
+    ctx.shadowColor = C.conf[i % C.conf.length];
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(tx, ty, 2, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const bx = cx + dance * 0.3;
+  const yOff = -bounce;
+
+  // Character positions
+  const feetY = groundY + yOff;
+  const hipY = feetY - 55;
+  const neckY = hipY - 50;
+  const headY = neckY - A.headR - 2;
+  const shoulderY = neckY + 18;
+
+  // Ground shadow
+  ctx.save();
+  ctx.globalAlpha = 0.1;
+  ctx.fillStyle = "#1e293b";
+  ctx.beginPath();
+  ctx.ellipse(bx, groundY + 2, 22 + Math.abs(dance) * 0.3, 3.5, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Legs ──
+  const legSwing = Math.sin(t * 7) * 12;
+  glow(ctx, C.leg, 3.5, 8);
+  ctx.beginPath();
+  ctx.moveTo(bx, hipY);
+  ctx.quadraticCurveTo(bx - 14, hipY + 28, bx - 14 + legSwing, feetY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bx, hipY);
+  ctx.quadraticCurveTo(bx + 14, hipY + 28, bx + 14 - legSwing, feetY);
+  ctx.stroke();
+  drawShoe(ctx, bx - 14 + legSwing - 5, feetY + 3, -0.25, t, 0);
+  drawShoe(ctx, bx + 14 - legSwing + 5, feetY + 3, 0.25, t, 0);
+
+  // ── Body ──
+  glow(ctx, C.body, 4, 10);
+  ctx.beginPath();
+  ctx.moveTo(bx, neckY);
+  ctx.lineTo(bx, hipY);
+  ctx.stroke();
+
+  // Heart
+  const beat = 1 + Math.sin(t * 12) * 0.25;
+  ctx.save();
+  ctx.translate(bx - 7, neckY + 16);
+  ctx.scale(beat, beat);
+  fill(ctx, C.heart, 10);
+  ctx.font = "14px serif";
+  ctx.fillText("\u2665", 0, 0);
+  ctx.restore();
+
+  // Belt
+  ctx.save();
+  ctx.strokeStyle = "#94a3b8";
+  ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.moveTo(bx - 8, hipY - 2);
+  ctx.lineTo(bx + 8, hipY - 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Arms holding trophy ──
+  const armPhase = Math.floor(t * 0.8) % 3;
+  glow(ctx, C.arm, 3.5, 8);
+  const armWave = Math.sin(t * 8) * 6;
+
+  let leftHandX, leftHandY, rightHandX, rightHandY;
+
+  if (armPhase === 0) {
+    leftHandX = bx - 12 + armWave;
+    leftHandY = headY - 32;
+    rightHandX = bx + 12 - armWave;
+    rightHandY = headY - 32;
+  } else if (armPhase === 1) {
+    const tilt = Math.sin(t * 6) * 10;
+    leftHandX = bx - 6 + tilt;
+    leftHandY = headY - 28;
+    rightHandX = bx + 18 + tilt;
+    rightHandY = headY - 36;
+  } else {
+    const tilt = Math.sin(t * 6) * 10;
+    leftHandX = bx - 18 - tilt;
+    leftHandY = headY - 36;
+    rightHandX = bx + 6 - tilt;
+    rightHandY = headY - 28;
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(bx, shoulderY);
+  ctx.quadraticCurveTo(bx - 25, shoulderY - 15, leftHandX, leftHandY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bx, shoulderY);
+  ctx.quadraticCurveTo(bx + 25, shoulderY - 15, rightHandX, rightHandY);
+  ctx.stroke();
+
+  fill(ctx, C.hand, 5);
+  ctx.beginPath();
+  ctx.arc(leftHandX, leftHandY, 5, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(rightHandX, rightHandY, 5, 0, TAU);
+  ctx.fill();
+
+  // ── Trophy between hands ──
+  const trophyX = (leftHandX + rightHandX) / 2;
+  const trophyY = Math.min(leftHandY, rightHandY) - 12;
+  drawTrophyGolden(ctx, trophyX, trophyY, t);
+
+  // ── Head ──
+  glow(ctx, C.head, 4, 14);
+  ctx.beginPath();
+  ctx.arc(bx, headY, A.headR, 0, TAU);
+  ctx.stroke();
+
+  // Sunglasses
+  ctx.save();
+  ctx.fillStyle = "#1e293b";
+  ctx.shadowBlur = 0;
+  ctx.fillRect(bx - 15, headY - 8, 12, 8);
+  ctx.fillRect(bx + 3, headY - 8, 12, 8);
+  ctx.fillRect(bx - 3, headY - 6, 6, 3);
+  ctx.fillStyle = "rgba(96,165,250,0.4)";
+  ctx.fillRect(bx - 14, headY - 7, 5, 3);
+  ctx.fillRect(bx + 4, headY - 7, 5, 3);
+  ctx.restore();
+
+  // Big smile
+  glow(ctx, C.head, 3, 8);
+  ctx.beginPath();
+  ctx.arc(bx, headY + 5, 10, 0.1, Math.PI - 0.1);
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.shadowBlur = 0;
+  ctx.fillRect(bx - 6, headY + 9, 12, 3);
+
+  // Crown above trophy
+  ctx.font = "14px serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#eab308";
+  ctx.shadowColor = "#eab308";
+  ctx.shadowBlur = 10;
+  ctx.fillText("\uD83D\uDC51", trophyX, trophyY - 25 + Math.sin(t * 2) * 3);
+
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
 //  MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════
 export default function HangmanCanvas({wrongGuesses, lost, won}) {
@@ -1457,6 +2419,7 @@ export default function HangmanCanvas({wrongGuesses, lost, won}) {
   const animRef = useRef(null);
   const confettiRef = useRef(null);
   const deathTimeRef = useRef(null);
+  const wonAtRef = useRef(null);
   const startRef = useRef(null);
   const prevWrongRef = useRef(0);
   const blinkTimer = useRef(0);
@@ -1497,6 +2460,11 @@ export default function HangmanCanvas({wrongGuesses, lost, won}) {
     if (won && !confettiRef.current) confettiRef.current = createConfetti();
     if (!won) confettiRef.current = null;
 
+    if (won && wonAtRef.current === null) {
+      wonAtRef.current = (performance.now() - startRef.current) / 1000;
+    }
+    if (!won) wonAtRef.current = null;
+
     if (lost && !deathTimeRef.current) {
       deathTimeRef.current = (performance.now() - startRef.current) / 1000;
     }
@@ -1522,25 +2490,119 @@ export default function HangmanCanvas({wrongGuesses, lost, won}) {
       // ── Gallows ──
       const creak = drawGallows(ctx, t, wrongGuesses);
 
-      // ── Rope ──
-      const {swing, ropeEndY} = drawRope(ctx, t, wrongGuesses, creak, mood);
-
       if (won) {
-        // ── VICTORY ──
-        drawVictoryPose(ctx, t);
-        if (confettiRef.current) drawConfetti(ctx, confettiRef.current, t);
-        // Victory emojis
-        if (Math.random() < 0.05) {
-          const vEmojis = ["🎉", "⭐", "🔥", "💃", "🕺", "✨", "🎊"];
-          spawnEmoji(
-            emojisRef.current,
-            vEmojis[Math.floor(Math.random() * vEmojis.length)],
-            Math.random() * W,
-            H,
+        // ══════════════════════════════════════════════════════
+        //  WIN SEQUENCE:
+        //  rope glows → snaps → man jumps/falls → lands →
+        //  trophy descends → celebration dance with trophy
+        // ══════════════════════════════════════════════════════
+        const elapsed = wonAtRef.current !== null ? t - wonAtRef.current : 0;
+
+        // ── Phase timings (seconds after win) ──────────────────
+        const ROPE_SNAP = 0.6; // rope breaks
+        const FALL_START = 0.7; // body begins free fall
+        const LAND_TIME = FALL_START + 1.2; // lands on ground
+        const TROPHY_START = 2.6; // trophy descends from sky
+        const DANCE_START = 3.3; // full celebration starts
+
+        if (elapsed >= DANCE_START) {
+          // ── Full victory celebration with trophy ────────────
+          drawVictoryCelebration(ctx, t);
+          if (confettiRef.current) drawConfetti(ctx, confettiRef.current, t);
+          if (Math.random() < 0.04) {
+            const vEmojis = [
+              "\uD83C\uDF89",
+              "\u2B50",
+              "\uD83D\uDD25",
+              "\uD83D\uDC83",
+              "\uD83D\uDD7A",
+              "\u2728",
+              "\uD83C\uDF8A",
+              "\uD83C\uDFC6",
+            ];
+            spawnEmoji(
+              emojisRef.current,
+              vEmojis[Math.floor(Math.random() * vEmojis.length)],
+              Math.random() * W,
+              H,
+            );
+          }
+        } else if (elapsed >= TROPHY_START) {
+          // ── Standing man + trophy descending ────────────────
+          drawWinFall(ctx, t, 5, wrongGuesses);
+          drawTrophyDescending(ctx, BASE_X, 100, elapsed - TROPHY_START, t);
+          if (confettiRef.current) drawConfetti(ctx, confettiRef.current, t);
+        } else if (elapsed >= FALL_START) {
+          // ── Free fall + landing ─────────────────────────────
+          const fallElapsed = elapsed - FALL_START;
+          drawWinFall(ctx, t, fallElapsed, wrongGuesses);
+          drawRopeSnapParticles(
+            ctx,
+            A.ropeTop.x,
+            A.ropeTop.y + 10,
+            elapsed - ROPE_SNAP,
           );
+          if (elapsed >= LAND_TIME) {
+            drawImpactDust(ctx, BASE_X, 318, elapsed - LAND_TIME);
+          }
+          if (confettiRef.current && elapsed >= LAND_TIME) {
+            drawConfetti(ctx, confettiRef.current, t);
+          }
+        } else {
+          // ── Pre-snap: hanging man + rope glow ───────────────
+          if (wrongGuesses >= 1) {
+            const {swing, ropeEndY} = drawRope(ctx, t, wrongGuesses, creak, 0);
+
+            const headInfo = drawHead(
+              ctx,
+              t,
+              0,
+              blinkState.current,
+              swing,
+              ropeEndY,
+            );
+            if (wrongGuesses >= 2) {
+              const bodyI = drawBody(ctx, t, headInfo.bob, swing, ropeEndY, 0);
+              if (wrongGuesses >= 3) drawLeftArm(ctx, t, bodyI, swing, 0);
+              if (wrongGuesses >= 4) drawRightArm(ctx, t, bodyI, swing, 0);
+              if (wrongGuesses >= 5) drawLeftLeg(ctx, t, bodyI, swing, 0);
+              if (wrongGuesses >= 6) drawRightLeg(ctx, t, bodyI, swing, 0);
+            }
+
+            // ── Rope glow effect building to snap ──
+            const glowProg = Math.min(1, elapsed / Math.max(0.01, ROPE_SNAP));
+            drawRopeGlow(
+              ctx,
+              A.ropeTop.x,
+              A.ropeTop.y,
+              ropeEndY + 10,
+              glowProg,
+              t,
+            );
+
+            // ── Speech bubble ──
+            drawWinSpeechBubble(
+              ctx,
+              headInfo.cx,
+              headInfo.cy,
+              elapsed < 0.3 ? "I DID IT!! \uD83C\uDF89" : "The rope... \u2728",
+            );
+          } else {
+            // Won with 0 mistakes — show excited idle man
+            drawIdleWaiting(ctx, t);
+            ctx.save();
+            ctx.font = "bold 12px system-ui, sans-serif";
+            ctx.fillStyle = "#fbbf24";
+            ctx.shadowColor = "#f59e0b";
+            ctx.shadowBlur = 10;
+            ctx.textAlign = "center";
+            ctx.fillText("PERFECT! \uD83C\uDFAF", BASE_X, 130);
+            ctx.restore();
+          }
         }
       } else if (lost) {
         // ── DEATH ──
+        const {swing, ropeEndY} = drawRope(ctx, t, wrongGuesses, creak, mood);
         const headInfo = drawHead(ctx, t * 0.25, 5, 1, swing * 0.3, ropeEndY);
         const bodyInfo = drawBody(
           ctx,
@@ -1558,6 +2620,7 @@ export default function HangmanCanvas({wrongGuesses, lost, won}) {
         drawTombstone(ctx, t);
       } else {
         // ── ALIVE ──
+        const {swing, ropeEndY} = drawRope(ctx, t, wrongGuesses, creak, mood);
         let headBob = 0;
         let bodyInfo = null;
 
