@@ -60,16 +60,16 @@ const C = {
 const BASE_X = 210;
 const A = {
   ropeTop: {x: BASE_X, y: 28},
-  headCtr: {x: BASE_X, y: 98},
+  headCtr: {x: BASE_X, y: 118},
   headR: 24,
-  neckY: 122,
-  shoulderY: 145,
-  bodyBot: {x: BASE_X, y: 205},
-  hipY: 205,
-  lArm: {x: 168, y: 185},
-  rArm: {x: 252, y: 185},
-  lLeg: {x: 170, y: 265},
-  rLeg: {x: 250, y: 265},
+  neckY: 142,
+  shoulderY: 165,
+  bodyBot: {x: BASE_X, y: 225},
+  hipY: 225,
+  lArm: {x: 168, y: 205},
+  rArm: {x: 252, y: 205},
+  lLeg: {x: 170, y: 285},
+  rLeg: {x: 250, y: 285},
 };
 
 // ── Funny speech lines per mistake count ─────────────────────
@@ -210,7 +210,7 @@ function drawGallows(ctx, t, wrongGuesses) {
 //  ROPE — physics pendulum with knot + tension stretch
 // ══════════════════════════════════════════════════════════════
 function drawRope(ctx, t, wrongGuesses, creak, mood) {
-  if (wrongGuesses === 0) return {swing: 0, ropeEndY: 74};
+  if (wrongGuesses === 0) return {swing: 0, ropeEndY: 94};
   ctx.save();
 
   // Pendulum physics: more sway = more guesses
@@ -220,7 +220,7 @@ function drawRope(ctx, t, wrongGuesses, creak, mood) {
 
   // Tension: rope stretches slightly with more body parts
   const tension = wrongGuesses * 1.2;
-  const ropeBaseY = 74 + tension;
+  const ropeBaseY = 94 + tension;
 
   // Rope segments (catenary-like curve)
   glow(ctx, C.rope, 3, 8);
@@ -1648,7 +1648,7 @@ function drawWinFall(ctx, t, fallElapsed, wrongGuesses) {
 
   // ── Derive proportions from the actual hanging-man formulas ──
   const wg = Math.max(1, wrongGuesses);
-  const ropeEnd = 74 + wg * 1.2;
+  const ropeEnd = 94 + wg * 1.2;
   const hangHY = ropeEnd + A.headR + 3; // head centre  ≈107
   const hangNY = ropeEnd + A.headR * 2 + 4; // neck         ≈132
   const hangIPY = hangNY + 83; // hip          ≈215
@@ -2682,7 +2682,7 @@ export default function HangmanCanvas({wrongGuesses, lost, won}) {
       ref={canvasRef}
       width={W}
       height={H}
-      style={{background: "transparent"}}
+      style={{background: "transparent", maxWidth: "100%", height: "auto"}}
     />
   );
 }

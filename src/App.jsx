@@ -182,6 +182,8 @@ const CONFETTI_EMOJIS = [
 ];
 const SKULL_RAIN = [E.skull, E.grimace, E.scream, E.facepalm, E.boom];
 
+const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+
 // ── Pre-generated confetti pieces (stable across renders) ─────────────────────
 const PIECES_DATA = Array.from({length: 44}, (_, i) => {
   const shapes = ["rect", "circle", "diamond"];
@@ -401,6 +403,162 @@ const STYLES = `
   40%  { transform:scale(1.03); }
   100% { transform:scale(1); }
 }
+@keyframes keyPress {
+  0%   { transform:translateY(0) scale(1); }
+  40%  { transform:translateY(3px) scale(0.93); }
+  100% { transform:translateY(0) scale(1); }
+}
+@keyframes keyPing {
+  0%   { box-shadow:0 0 0 0 rgba(99,102,241,0.45); }
+  70%  { box-shadow:0 0 0 10px rgba(99,102,241,0.08); }
+  100% { box-shadow:0 0 0 16px rgba(99,102,241,0); }
+}
+@keyframes keyPingDark {
+  0%   { box-shadow:0 0 0 0 rgba(129,140,248,0.4); }
+  70%  { box-shadow:0 0 0 10px rgba(129,140,248,0.06); }
+  100% { box-shadow:0 0 0 16px rgba(129,140,248,0); }
+}
+@keyframes keyFlash {
+  0%   { background-color: rgba(99,102,241,0.18); }
+  100% { background-color: transparent; }
+}
+
+.keyboard-surface {
+  background: linear-gradient(180deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.92) 100%);
+  border: 1px solid rgba(203,213,225,0.6);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 20px 50px -12px rgba(15,23,42,0.08),
+    0 4px 12px rgba(15,23,42,0.03);
+}
+.dark .keyboard-surface {
+  background: linear-gradient(180deg, rgba(15,23,42,0.85) 0%, rgba(2,6,23,0.7) 100%);
+  border: 1px solid rgba(51,65,85,0.5);
+  box-shadow:
+    0 1px 0 rgba(51,65,85,0.3) inset,
+    0 24px 60px -12px rgba(2,6,23,0.5),
+    0 4px 12px rgba(0,0,0,0.25);
+}
+
+.keycap {
+  border-radius: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  position: relative;
+  transition:
+    transform 100ms cubic-bezier(0.4,0,0.2,1),
+    box-shadow 180ms cubic-bezier(0.4,0,0.2,1),
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+.keycap:active {
+  transform: translateY(2px) scale(0.96);
+}
+
+.keycap--idle {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #cbd5e1;
+  border-bottom: 3px solid #94a3b8;
+  color: #1e293b;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 2px 6px rgba(15,23,42,0.06);
+}
+.keycap--idle:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  border-color: #94a3b8;
+  border-bottom-color: #64748b;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 4px 12px rgba(15,23,42,0.1);
+}
+.dark .keycap--idle {
+  background: linear-gradient(180deg, rgba(51,65,85,0.7) 0%, rgba(30,41,59,0.8) 100%);
+  border: 1px solid rgba(71,85,105,0.7);
+  border-bottom: 3px solid rgba(51,65,85,0.9);
+  color: #e2e8f0;
+  box-shadow:
+    0 1px 0 rgba(71,85,105,0.3) inset,
+    0 2px 8px rgba(2,6,23,0.4);
+}
+.dark .keycap--idle:hover {
+  background: linear-gradient(180deg, rgba(71,85,105,0.6) 0%, rgba(51,65,85,0.7) 100%);
+  border-color: rgba(100,116,139,0.7);
+  box-shadow:
+    0 1px 0 rgba(71,85,105,0.4) inset,
+    0 6px 16px rgba(2,6,23,0.5);
+}
+
+.keycap--correct {
+  background: linear-gradient(180deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 1px solid #6ee7b7;
+  border-bottom: 3px solid #34d399;
+  color: #065f46;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 2px 8px rgba(16,185,129,0.2);
+}
+.dark .keycap--correct {
+  background: linear-gradient(180deg, rgba(6,95,70,0.5) 0%, rgba(6,78,59,0.6) 100%);
+  border: 1px solid rgba(52,211,153,0.5);
+  border-bottom: 3px solid rgba(16,185,129,0.6);
+  color: #6ee7b7;
+  box-shadow:
+    0 1px 0 rgba(52,211,153,0.15) inset,
+    0 2px 8px rgba(16,185,129,0.15);
+}
+
+.keycap--wrong {
+  background: linear-gradient(180deg, #fee2e2 0%, #fecaca 100%);
+  border: 1px solid #fca5a5;
+  border-bottom: 3px solid #f87171;
+  color: #991b1b;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.5) inset,
+    0 2px 8px rgba(239,68,68,0.15);
+}
+.dark .keycap--wrong {
+  background: linear-gradient(180deg, rgba(127,29,29,0.5) 0%, rgba(69,10,10,0.6) 100%);
+  border: 1px solid rgba(239,68,68,0.4);
+  border-bottom: 3px solid rgba(185,28,28,0.6);
+  color: #fca5a5;
+  box-shadow:
+    0 1px 0 rgba(239,68,68,0.1) inset,
+    0 2px 8px rgba(239,68,68,0.1);
+}
+
+.keycap--disabled {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-bottom: 2px solid #e2e8f0;
+  color: #cbd5e1;
+  box-shadow: none;
+  opacity: 0.7;
+}
+.dark .keycap--disabled {
+  background: rgba(30,41,59,0.5);
+  border: 1px solid rgba(51,65,85,0.4);
+  border-bottom: 2px solid rgba(51,65,85,0.4);
+  color: rgba(100,116,139,0.5);
+  opacity: 0.6;
+}
+
+.keycap--pressed {
+  animation: keyPress 0.2s cubic-bezier(0.4,0,0.2,1), keyPing 0.5s cubic-bezier(0,0,0.2,1);
+  background: linear-gradient(180deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+  border-color: #818cf8 !important;
+  border-bottom-width: 1px !important;
+  color: #3730a3 !important;
+  transform: translateY(2px);
+}
+.dark .keycap--pressed {
+  animation: keyPress 0.2s cubic-bezier(0.4,0,0.2,1), keyPingDark 0.5s cubic-bezier(0,0,0.2,1);
+  background: linear-gradient(180deg, rgba(67,56,202,0.4) 0%, rgba(55,48,163,0.5) 100%) !important;
+  border-color: rgba(129,140,248,0.7) !important;
+  color: #a5b4fc !important;
+}
 `;
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -422,6 +580,7 @@ export default function App() {
   const [combo, setCombo] = useState(0);
   const [comboMsg, setComboMsg] = useState(null);
   const [revealedLetter, setRevealedLetter] = useState(null);
+  const [pressedLetter, setPressedLetter] = useState(null);
   const [winStreak, setWinStreak] = useState(0);
   const [resultMsg, setResultMsg] = useState("");
   const [hintsUsed, setHintsUsed] = useState(0);
@@ -431,6 +590,7 @@ export default function App() {
   const toastRef = useRef(null);
   const comboRef = useRef(null);
   const diamondRef = useRef(null);
+  const keyPressRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -617,6 +777,9 @@ export default function App() {
   const handleGuess = useCallback(
     (letter) => {
       if (guessedLetters.has(letter) || isOver) return;
+      clearTimeout(keyPressRef.current);
+      setPressedLetter(letter);
+      keyPressRef.current = setTimeout(() => setPressedLetter(null), 200);
       soundManager.playKeyClick();
       const newGuessed = new Set(guessedLetters);
       newGuessed.add(letter);
@@ -794,15 +957,19 @@ export default function App() {
       ))}
 
       {/* ── PAGE ─────────────────────────────────────────────────────────── */}
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-gray-950 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center px-3 py-5 font-sans relative overflow-hidden transition-colors duration-700">
-        {/* Background blobs */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-orange-100/50 dark:bg-indigo-500/8 blur-3xl pointer-events-none transition-colors duration-1000" />
-        <div className="absolute bottom-20 right-1/4 w-80 h-80 rounded-full bg-purple-100/40 dark:bg-fuchsia-500/6 blur-3xl pointer-events-none transition-colors duration-1000" />
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-gray-950 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center px-4 py-6 sm:px-6 sm:py-10 font-sans relative overflow-hidden transition-colors duration-700">
+        {/* Background layers */}
+        <div className="absolute top-0 left-1/4 w-125 h-125 rounded-full bg-indigo-100/40 dark:bg-indigo-500/8 blur-3xl pointer-events-none transition-colors duration-1000" />
+        <div className="absolute bottom-20 right-1/4 w-100 h-100 rounded-full bg-violet-100/30 dark:bg-fuchsia-500/6 blur-3xl pointer-events-none transition-colors duration-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 rounded-full bg-sky-50/40 dark:bg-sky-900/5 blur-3xl pointer-events-none transition-colors duration-1000" />
+        <div className="absolute inset-0 bg-aurora pointer-events-none" />
+        <div className="absolute inset-0 bg-grid pointer-events-none" />
+        <div className="absolute inset-0 bg-vignette pointer-events-none" />
 
         {/* Toast */}
         {toastMsg && (
           <div
-            className="fixed top-5 left-1/2 z-50 -translate-x-1/2 bg-white/90 dark:bg-slate-900/90 border border-gray-200/80 dark:border-slate-700/80 text-gray-800 dark:text-slate-100 font-bold text-sm px-5 py-2 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 whitespace-nowrap backdrop-blur-sm"
+            className="fixed top-5 left-1/2 z-50 -translate-x-1/2 bg-white/95 dark:bg-slate-900/95 border border-slate-200/70 dark:border-slate-700/70 text-slate-800 dark:text-slate-100 font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 whitespace-nowrap backdrop-blur-md"
             style={{
               animation: "popIn 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards",
             }}
@@ -839,17 +1006,17 @@ export default function App() {
         )}
 
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
-        <header className="w-full max-w-3xl flex items-center justify-between mb-4">
+        <header className="w-full max-w-5xl flex items-center justify-between mb-6 relative z-10">
           <div>
             <h1
-              className="text-2xl sm:text-3xl font-black tracking-wider select-none"
+              className="text-3xl sm:text-4xl font-black tracking-wider select-none font-display"
               style={{
                 background:
-                  "linear-gradient(135deg, #1e293b 0%, #475569 50%, #1e293b 100%)",
+                  "linear-gradient(135deg, #0f172a 0%, #334155 40%, #0f172a 100%)",
                 backgroundSize: "200% 200%",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                animation: "rainbow 6s ease infinite",
+                animation: "rainbow 8s ease infinite",
               }}
             >
               <span className="dark:hidden">HANGMAN</span>
@@ -857,17 +1024,17 @@ export default function App() {
                 className="hidden dark:inline"
                 style={{
                   background:
-                    "linear-gradient(135deg, #e2e8f0 0%, #94a3b8 50%, #e2e8f0 100%)",
+                    "linear-gradient(135deg, #f1f5f9 0%, #94a3b8 40%, #f1f5f9 100%)",
                   backgroundSize: "200% 200%",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  animation: "rainbow 6s ease infinite",
+                  animation: "rainbow 8s ease infinite",
                 }}
               >
                 HANGMAN
               </span>
             </h1>
-            <p className="text-gray-400 dark:text-slate-500 text-[11px] tracking-widest uppercase font-medium mt-0.5">
+            <p className="text-slate-400 dark:text-slate-500 text-xs tracking-widest uppercase font-medium mt-0.5">
               {isOver
                 ? isWon
                   ? `${E.trophy} You won!`
@@ -876,16 +1043,16 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {/* Diamond counter */}
-            <div className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+            <div className="h-9 px-3 rounded-xl border border-cyan-200/60 dark:border-cyan-800/40 text-cyan-600 dark:text-cyan-300 font-bold text-sm flex items-center gap-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm">
               {E.gem}
-              <span className="text-xs tabular-nums">{diamonds}</span>
+              <span className="tabular-nums">{diamonds}</span>
             </div>
 
             {winStreak >= 2 && (
               <div
-                className="h-8 px-2.5 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-amber-600 dark:text-amber-400 font-bold text-xs flex items-center gap-1"
+                className="h-9 px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-amber-200/80 dark:border-amber-700/40 text-amber-600 dark:text-amber-400 font-bold text-sm flex items-center gap-1.5"
                 style={{
                   animation:
                     "streakSlide 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards",
@@ -895,16 +1062,16 @@ export default function App() {
               </div>
             )}
 
-            <div className="h-8 px-2.5 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center gap-1">
+            <div className="h-9 px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-emerald-200/60 dark:border-slate-700/80 text-emerald-600 dark:text-emerald-400 font-bold text-sm flex items-center gap-1.5">
               {E.trophy} {scores.wins}
             </div>
-            <div className="h-8 px-2.5 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-red-500 dark:text-red-400 font-bold text-xs flex items-center gap-1">
+            <div className="h-9 px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-red-200/50 dark:border-slate-700/80 text-red-500 dark:text-red-400 font-bold text-sm flex items-center gap-1.5">
               {E.skull} {scores.losses}
             </div>
 
             <button
               onClick={toggleTheme}
-              className="h-8 w-8 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
+              className="h-9 w-9 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-slate-200/80 dark:border-slate-700/80 text-base text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
               aria-label={
                 theme === "dark"
                   ? "Switch to light mode"
@@ -917,7 +1084,7 @@ export default function App() {
 
             <button
               onClick={toggleSound}
-              className="h-8 w-8 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
+              className="h-9 w-9 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-slate-200/80 dark:border-slate-700/80 text-base text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
             >
               {soundOn ? E.loud : E.mute}
             </button>
@@ -925,28 +1092,28 @@ export default function App() {
         </header>
 
         {/* ── MAIN CARD ───────────────────────────────────────────────────── */}
-        <main className="w-full max-w-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-xl shadow-black/5 dark:shadow-black/20 relative">
+        <main className="w-full max-w-5xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-[0_24px_80px_-16px_rgba(15,23,42,0.10)] dark:shadow-[0_24px_80px_-16px_rgba(0,0,0,0.35)] relative">
           {/* Category badge */}
-          <div className="flex justify-center mb-2">
-            <span className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 px-4 py-1 rounded-full text-[11px] font-semibold tracking-widest uppercase">
+          <div className="flex justify-center mb-3">
+            <span className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 px-5 py-1.5 rounded-full text-[11px] font-semibold tracking-widest uppercase shadow-sm">
               {E.folder} {category}
             </span>
           </div>
 
           {/* Clue / Question */}
-          <div className="flex justify-center mb-4">
-            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-4 py-2.5 max-w-lg w-full text-center">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">
+          <div className="flex justify-center mb-5">
+            <div className="bg-linear-to-b from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-800/40 border border-slate-200/50 dark:border-slate-700/40 rounded-2xl px-6 py-4 max-w-xl w-full text-center shadow-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
                 {E.bulb} Clue
               </p>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 leading-snug">
+              <p className="text-base font-medium text-slate-700 dark:text-slate-200 leading-relaxed">
                 {clue}
               </p>
             </div>
           </div>
 
           {/* Taunt bar */}
-          <div className="flex justify-center mb-3 min-h-5">
+          <div className="flex justify-center mb-4 min-h-5">
             {TAUNTS[wrongGuesses] && !isOver && (
               <p
                 className={`text-xs font-semibold ${nearDeath ? "text-red-500 dark:text-red-400" : "text-slate-400 dark:text-slate-500"}`}
@@ -959,17 +1126,17 @@ export default function App() {
             )}
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-6 items-center lg:items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 lg:gap-10 items-start">
             {/* LEFT: canvas + lives */}
-            <div className="flex flex-col items-center gap-2.5 shrink-0">
+            <div className="flex flex-col items-center gap-3 mx-auto lg:mx-0 w-full">
               <div
                 key={shakeKey}
-                className={`rounded-xl p-2.5 border transition-all duration-1000 ease-in-out ${
+                className={`rounded-2xl p-4 border transition-all duration-1000 ease-in-out w-full flex items-center justify-center ${
                   isWon
                     ? "bg-linear-to-b from-amber-50/80 to-orange-50/40 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-300/60 dark:border-amber-700/40 shadow-lg shadow-amber-200/20 dark:shadow-amber-900/10"
                     : isLost
                       ? "bg-linear-to-b from-red-50/60 to-rose-50/30 dark:from-red-950/20 dark:to-red-900/10 border-red-300/40 dark:border-red-800/40 shadow-lg shadow-red-200/15 dark:shadow-red-900/10"
-                      : "bg-slate-50/80 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/50"
+                      : "bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-700/40"
                 }`}
                 style={{
                   ...(shakeKey > 0
@@ -993,16 +1160,16 @@ export default function App() {
               </div>
 
               {/* Progress bar */}
-              <div className="w-full px-1">
-                <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1">
-                  <span className="font-medium">Mistakes</span>
+              <div className="w-full max-w-85 px-1">
+                <div className="flex justify-between text-[11px] text-slate-400 dark:text-slate-500 mb-1.5">
+                  <span className="font-semibold">Mistakes</span>
                   <span
                     className={`font-bold tabular-nums ${wrongGuesses >= 5 ? "text-red-500" : "text-slate-600 dark:text-slate-300"}`}
                   >
                     {wrongGuesses} / {MAX_WRONG}
                   </span>
                 </div>
-                <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
                     style={{
@@ -1013,11 +1180,11 @@ export default function App() {
                     }}
                   />
                 </div>
-                <div className="flex justify-center gap-1.5 mt-1.5">
+                <div className="flex justify-center gap-2 mt-2">
                   {Array.from({length: MAX_WRONG}, (_, i) => (
                     <div
                       key={i}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                         i < wrongGuesses
                           ? "bg-red-400 dark:bg-red-500 scale-110"
                           : "bg-slate-200 dark:bg-slate-700"
@@ -1029,16 +1196,16 @@ export default function App() {
             </div>
 
             {/* RIGHT: word + keyboard */}
-            <div className="flex-1 w-full flex flex-col gap-5">
+            <div className="flex-1 w-full flex flex-col gap-4">
               {/* Word blanks */}
-              <div className="flex flex-wrap justify-center gap-1.5 min-h-14">
+              <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3 min-h-16 py-3">
                 {word.split("").map((letter, i) => {
                   const revealed = guessedLetters.has(letter);
                   const justRevealed = revealedLetter === letter;
                   return (
-                    <div key={i} className="flex flex-col items-center gap-0.5">
+                    <div key={i} className="flex flex-col items-center gap-1.5">
                       <span
-                        className={`text-xl font-bold w-7 inline-block text-center transition-colors duration-300 ${
+                        className={`text-2xl sm:text-3xl font-black w-9 sm:w-10 inline-block text-center transition-all duration-300 ${
                           revealed
                             ? isLost
                               ? "text-red-500"
@@ -1059,11 +1226,11 @@ export default function App() {
                         {revealed || isLost ? letter : "?"}
                       </span>
                       <div
-                        className={`h-0.5 w-7 rounded-full transition-all duration-500 ${
+                        className={`h-0.75 w-9 sm:w-10 rounded-full transition-all duration-500 ${
                           revealed
                             ? isLost
                               ? "bg-red-400"
-                              : "bg-emerald-500 dark:bg-emerald-400"
+                              : "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
                             : "bg-slate-300 dark:bg-slate-600"
                         }`}
                       />
@@ -1073,16 +1240,16 @@ export default function App() {
               </div>
 
               {/* Wrong letter badges */}
-              <div className="min-h-7 flex flex-wrap justify-center gap-1">
+              <div className="min-h-8 flex flex-wrap justify-center gap-2 items-center">
                 {wrongLetters.length > 0 && (
                   <>
-                    <span className="w-full text-center text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest font-medium">
+                    <span className="w-full text-center text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-0.5">
                       {E.skull} Wrong guesses
                     </span>
                     {wrongLetters.map((l) => (
                       <span
                         key={l}
-                        className="bg-red-50 dark:bg-red-950/30 border border-red-200/70 dark:border-red-900/50 text-red-400 dark:text-red-400 px-2 py-0.5 rounded text-xs font-bold"
+                        className="bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/50 text-red-500 dark:text-red-400 px-3 py-1 rounded-lg text-xs font-bold shadow-sm"
                         style={{
                           animation:
                             "popIn 0.15s cubic-bezier(0.34,1.56,0.64,1) forwards",
@@ -1096,41 +1263,62 @@ export default function App() {
               </div>
 
               {/* Keyboard */}
-              <div className="flex flex-wrap justify-center gap-1 max-w-70 mx-auto">
-                {ALPHABET.map((letter) => {
-                  const isGuessed = guessedLetters.has(letter);
-                  const isCorrect = isGuessed && word.includes(letter);
-                  const isWrong = isGuessed && !word.includes(letter);
-                  return (
-                    <button
-                      key={letter}
-                      onClick={() => handleGuess(letter)}
-                      disabled={isGuessed || isOver}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all duration-150 border select-none ${
-                        isCorrect
-                          ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 cursor-default scale-90 opacity-70"
-                          : isWrong
-                            ? "bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border-slate-100 dark:border-slate-800 cursor-default opacity-30 scale-90"
-                            : isOver
-                              ? "bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-default"
-                              : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-700 dark:hover:bg-slate-600 hover:text-white hover:border-slate-600 dark:hover:border-slate-500 hover:-translate-y-0.5 hover:shadow-md active:scale-95 active:translate-y-0 cursor-pointer"
+              <div className="keyboard-surface px-3 py-3 sm:px-5 sm:py-4">
+                <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+                  {KEY_ROWS.map((row, rowIndex) => (
+                    <div
+                      key={row}
+                      className={`flex justify-center gap-1 sm:gap-1.5 ${
+                        rowIndex === 1
+                          ? "px-2 sm:px-4"
+                          : rowIndex === 2
+                            ? "px-4 sm:px-8"
+                            : ""
                       }`}
                     >
-                      {letter}
-                    </button>
-                  );
-                })}
+                      {row.split("").map((letter) => {
+                        const isGuessed = guessedLetters.has(letter);
+                        const isCorrect = isGuessed && word.includes(letter);
+                        const isWrong = isGuessed && !word.includes(letter);
+                        const stateClass = isCorrect
+                          ? "keycap--correct"
+                          : isWrong
+                            ? "keycap--wrong"
+                            : isOver
+                              ? "keycap--disabled"
+                              : "keycap--idle";
+                        const isPressed = pressedLetter === letter;
+                        return (
+                          <button
+                            key={letter}
+                            onClick={() => handleGuess(letter)}
+                            disabled={isGuessed || isOver}
+                            className={`keycap ${stateClass} ${
+                              isPressed ? "keycap--pressed" : ""
+                            } w-9 h-11 sm:w-11 sm:h-12 text-xs sm:text-sm select-none ${
+                              isGuessed || isOver
+                                ? "cursor-default opacity-transition"
+                                : "hover:-translate-y-0.5 active:scale-95"
+                            }`}
+                          >
+                            {letter}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Action buttons */}
-              <div className="flex justify-center gap-2.5 mt-1">
+              <div className="flex justify-center gap-3 pt-2">
                 {/* Hint button */}
                 <button
                   onClick={() => setShowHintModal(true)}
                   disabled={!canHint}
-                  className={`group h-10 px-4 rounded-xl font-bold text-xs tracking-wider transition-all duration-200 flex items-center gap-1.5 border ${
+                  className={`group h-11 px-6 rounded-xl font-bold text-sm tracking-wider transition-all duration-200 flex items-center gap-2 border ${
                     canHint
-                      ? "bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white border-slate-700 dark:border-slate-600 shadow-md shadow-slate-900/20 hover:scale-[1.03] active:scale-[0.97]"
+                      ? "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 shadow-md shadow-slate-900/8 hover:shadow-lg hover:scale-[1.03] active:scale-[0.97]"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-not-allowed shadow-none"
                   }`}
                   title={
@@ -1144,7 +1332,7 @@ export default function App() {
                   }
                 >
                   {E.bulb} HINT
-                  <span className="text-[10px] opacity-60">
+                  <span className="text-[10px] opacity-50">
                     ({HINT_COST}
                     {E.gem})
                   </span>
@@ -1153,7 +1341,7 @@ export default function App() {
                 {/* New game button */}
                 <button
                   onClick={startNewGame}
-                  className="group h-10 px-5 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs shadow-md shadow-slate-900/20 dark:shadow-black/10 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] tracking-wider flex items-center gap-1.5 border border-slate-800 dark:border-slate-200"
+                  className="group h-11 px-8 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-sm shadow-lg shadow-slate-900/20 dark:shadow-black/10 transition-all duration-200 hover:shadow-xl hover:scale-[1.03] active:scale-[0.97] tracking-wider flex items-center gap-2 border border-slate-800 dark:border-slate-200"
                 >
                   <span className="inline-block group-hover:animate-[spin_0.5s_linear]">
                     {E.refresh}
@@ -1165,7 +1353,7 @@ export default function App() {
           </div>
         </main>
 
-        <p className="mt-2.5 text-slate-400 dark:text-slate-600 text-[10px] text-center select-none font-medium">
+        <p className="mt-5 text-slate-400 dark:text-slate-600 text-[11px] text-center select-none font-medium tracking-wide">
           {E.kbd} Tip: Use your physical keyboard too!
         </p>
 
