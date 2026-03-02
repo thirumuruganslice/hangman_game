@@ -240,9 +240,9 @@ function getNewGame() {
 // ── CSS keyframes ─────────────────────────────────────────────────────────────
 const STYLES = `
 @keyframes floatUp {
-  0%   { opacity:1; transform:translateY(0) scale(1) rotate(0deg); }
+  0%   { opacity:1; transform:translate3d(0,0,0) scale(1) rotate(0deg); }
   80%  { opacity:.8; }
-  100% { opacity:0; transform:translateY(-110px) scale(1.4) rotate(20deg); }
+  100% { opacity:0; transform:translate3d(0,-110px,0) scale(1.4) rotate(20deg); }
 }
 @keyframes popIn {
   0%   { transform:scale(0) rotate(-15deg); opacity:0; }
@@ -309,9 +309,9 @@ const STYLES = `
   100% { transform:scale(1) rotate(0deg); }
 }
 @keyframes fallDown {
-  0%   { transform:translateY(-30px) rotate(0deg); opacity:1; }
+  0%   { transform:translate3d(0,-30px,0) rotate(0deg); opacity:1; }
   80%  { opacity:.8; }
-  100% { transform:translateY(102vh) rotate(720deg); opacity:0; }
+  100% { transform:translate3d(0,102vh,0) rotate(720deg); opacity:0; }
 }
 @keyframes sparkleOut {
   0%   { transform:translate(0,0) scale(1); opacity:1; }
@@ -620,7 +620,6 @@ export default function App() {
   }, []);
 
   const {word, category, clue, guessedLetters} = gameState;
-  console.log("Word:", word);
   const wrongLetters = [...guessedLetters].filter((l) => !word.includes(l));
   const correctLetters = [...guessedLetters].filter((l) => word.includes(l));
   const wrongGuesses = wrongLetters.length;
@@ -957,7 +956,7 @@ export default function App() {
       ))}
 
       {/* ── PAGE ─────────────────────────────────────────────────────────── */}
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-gray-950 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center px-4 py-6 sm:px-6 sm:py-10 font-sans relative overflow-hidden transition-colors duration-700">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-gray-950 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center px-2.5 py-3 sm:px-6 sm:py-8 md:py-10 font-sans relative overflow-hidden transition-colors duration-700">
         {/* Background layers */}
         <div className="absolute top-0 left-1/4 w-125 h-125 rounded-full bg-indigo-100/40 dark:bg-indigo-500/8 blur-3xl pointer-events-none transition-colors duration-1000" />
         <div className="absolute bottom-20 right-1/4 w-100 h-100 rounded-full bg-violet-100/30 dark:bg-fuchsia-500/6 blur-3xl pointer-events-none transition-colors duration-1000" />
@@ -969,7 +968,7 @@ export default function App() {
         {/* Toast */}
         {toastMsg && (
           <div
-            className="fixed top-5 left-1/2 z-50 -translate-x-1/2 bg-white/95 dark:bg-slate-900/95 border border-slate-200/70 dark:border-slate-700/70 text-slate-800 dark:text-slate-100 font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 whitespace-nowrap backdrop-blur-md"
+            className="fixed top-3 sm:top-5 left-1/2 z-50 -translate-x-1/2 bg-white/95 dark:bg-slate-900/95 border border-slate-200/70 dark:border-slate-700/70 text-slate-800 dark:text-slate-100 font-bold text-xs sm:text-sm px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 whitespace-nowrap backdrop-blur-md"
             style={{
               animation: "popIn 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards",
             }}
@@ -981,7 +980,7 @@ export default function App() {
         {/* Combo banner */}
         {comboMsg && (
           <div
-            className="fixed top-14 left-1/2 z-50 -translate-x-1/2 text-xl font-black text-orange-500 dark:text-orange-400 whitespace-nowrap"
+            className="fixed top-11 sm:top-14 left-1/2 z-50 -translate-x-1/2 text-base sm:text-xl font-black text-orange-500 dark:text-orange-400 whitespace-nowrap"
             style={{
               animation: "comboZoom 1s cubic-bezier(0.34,1.56,0.64,1) forwards",
               textShadow: "0 2px 12px rgba(249,115,22,0.3)",
@@ -995,7 +994,7 @@ export default function App() {
         {diamondPopup && (
           <div
             key={diamondPopup.key}
-            className="fixed top-24 left-1/2 z-50 -translate-x-1/2 flex items-center gap-1.5 bg-white/90 dark:bg-slate-800/90 text-cyan-600 dark:text-cyan-300 font-bold text-sm px-4 py-2 rounded-xl shadow-lg shadow-cyan-500/10 dark:shadow-cyan-500/5 whitespace-nowrap border border-cyan-200/60 dark:border-cyan-800/40 backdrop-blur-sm"
+            className="fixed top-20 sm:top-24 left-1/2 z-50 -translate-x-1/2 flex items-center gap-1.5 bg-white/90 dark:bg-slate-800/90 text-cyan-600 dark:text-cyan-300 font-bold text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-lg shadow-cyan-500/10 dark:shadow-cyan-500/5 whitespace-nowrap border border-cyan-200/60 dark:border-cyan-800/40 backdrop-blur-sm"
             style={{
               animation:
                 "diamondPop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards, diamondFloat 1.6s ease 0.35s forwards",
@@ -1006,10 +1005,10 @@ export default function App() {
         )}
 
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
-        <header className="w-full max-w-5xl flex items-center justify-between mb-6 relative z-10">
+        <header className="w-full max-w-5xl flex flex-wrap items-center justify-between gap-2 sm:gap-0 mb-3 sm:mb-6 relative z-10">
           <div>
             <h1
-              className="text-3xl sm:text-4xl font-black tracking-wider select-none font-display"
+              className="text-2xl sm:text-3xl md:text-4xl font-black tracking-wider select-none font-display"
               style={{
                 background:
                   "linear-gradient(135deg, #0f172a 0%, #334155 40%, #0f172a 100%)",
@@ -1043,16 +1042,16 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {/* Diamond counter */}
-            <div className="h-9 px-3 rounded-xl border border-cyan-200/60 dark:border-cyan-800/40 text-cyan-600 dark:text-cyan-300 font-bold text-sm flex items-center gap-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm">
+            <div className="h-8 px-2 sm:h-9 sm:px-3 rounded-xl border border-cyan-200/60 dark:border-cyan-800/40 text-cyan-600 dark:text-cyan-300 font-bold text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm">
               {E.gem}
               <span className="tabular-nums">{diamonds}</span>
             </div>
 
             {winStreak >= 2 && (
               <div
-                className="h-9 px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-amber-200/80 dark:border-amber-700/40 text-amber-600 dark:text-amber-400 font-bold text-sm flex items-center gap-1.5"
+                className="h-8 px-2 sm:h-9 sm:px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-amber-200/80 dark:border-amber-700/40 text-amber-600 dark:text-amber-400 font-bold text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5"
                 style={{
                   animation:
                     "streakSlide 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards",
@@ -1062,16 +1061,16 @@ export default function App() {
               </div>
             )}
 
-            <div className="h-9 px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-emerald-200/60 dark:border-slate-700/80 text-emerald-600 dark:text-emerald-400 font-bold text-sm flex items-center gap-1.5">
+            <div className="h-8 px-2 sm:h-9 sm:px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-emerald-200/60 dark:border-slate-700/80 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5">
               {E.trophy} {scores.wins}
             </div>
-            <div className="h-9 px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-red-200/50 dark:border-slate-700/80 text-red-500 dark:text-red-400 font-bold text-sm flex items-center gap-1.5">
+            <div className="h-8 px-2 sm:h-9 sm:px-3 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-red-200/50 dark:border-slate-700/80 text-red-500 dark:text-red-400 font-bold text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5">
               {E.skull} {scores.losses}
             </div>
 
             <button
               onClick={toggleTheme}
-              className="h-9 w-9 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-slate-200/80 dark:border-slate-700/80 text-base text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-slate-200/80 dark:border-slate-700/80 text-sm sm:text-base text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
               aria-label={
                 theme === "dark"
                   ? "Switch to light mode"
@@ -1084,7 +1083,7 @@ export default function App() {
 
             <button
               onClick={toggleSound}
-              className="h-9 w-9 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-slate-200/80 dark:border-slate-700/80 text-base text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-sm border border-slate-200/80 dark:border-slate-700/80 text-sm sm:text-base text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
             >
               {soundOn ? E.loud : E.mute}
             </button>
@@ -1092,28 +1091,28 @@ export default function App() {
         </header>
 
         {/* ── MAIN CARD ───────────────────────────────────────────────────── */}
-        <main className="w-full max-w-5xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-[0_24px_80px_-16px_rgba(15,23,42,0.10)] dark:shadow-[0_24px_80px_-16px_rgba(0,0,0,0.35)] relative">
+        <main className="w-full max-w-5xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/60 dark:border-slate-800/60 rounded-2xl sm:rounded-3xl p-3 sm:p-6 md:p-8 lg:p-10 shadow-[0_24px_80px_-16px_rgba(15,23,42,0.10)] dark:shadow-[0_24px_80px_-16px_rgba(0,0,0,0.35)] relative">
           {/* Category badge */}
-          <div className="flex justify-center mb-3">
-            <span className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 px-5 py-1.5 rounded-full text-[11px] font-semibold tracking-widest uppercase shadow-sm">
+          <div className="flex justify-center mb-2 sm:mb-3">
+            <span className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 px-3 py-1 sm:px-5 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-semibold tracking-widest uppercase shadow-sm">
               {E.folder} {category}
             </span>
           </div>
 
           {/* Clue / Question */}
-          <div className="flex justify-center mb-5">
-            <div className="bg-linear-to-b from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-800/40 border border-slate-200/50 dark:border-slate-700/40 rounded-2xl px-6 py-4 max-w-xl w-full text-center shadow-sm">
+          <div className="flex justify-center mb-3 sm:mb-5">
+            <div className="bg-linear-to-b from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-800/40 border border-slate-200/50 dark:border-slate-700/40 rounded-2xl px-3 py-2.5 sm:px-6 sm:py-4 max-w-xl w-full text-center shadow-sm">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
                 {E.bulb} Clue
               </p>
-              <p className="text-base font-medium text-slate-700 dark:text-slate-200 leading-relaxed">
+              <p className="text-sm sm:text-base font-medium text-slate-700 dark:text-slate-200 leading-relaxed">
                 {clue}
               </p>
             </div>
           </div>
 
           {/* Taunt bar */}
-          <div className="flex justify-center mb-4 min-h-5">
+          <div className="flex justify-center mb-2 sm:mb-4 min-h-5">
             {TAUNTS[wrongGuesses] && !isOver && (
               <p
                 className={`text-xs font-semibold ${nearDeath ? "text-red-500 dark:text-red-400" : "text-slate-400 dark:text-slate-500"}`}
@@ -1126,12 +1125,12 @@ export default function App() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 lg:gap-10 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-2 sm:gap-6 lg:gap-10 items-start">
             {/* LEFT: canvas + lives */}
-            <div className="flex flex-col items-center gap-3 mx-auto lg:mx-0 w-full">
+            <div className="flex flex-col items-center gap-1.5 sm:gap-3 mx-auto lg:mx-0 w-full max-w-60 sm:max-w-85 lg:max-w-none">
               <div
                 key={shakeKey}
-                className={`rounded-2xl p-4 border transition-all duration-1000 ease-in-out w-full flex items-center justify-center ${
+                className={`rounded-xl sm:rounded-2xl p-1.5 sm:p-4 border transition-all duration-1000 ease-in-out w-full flex items-center justify-center ${
                   isWon
                     ? "bg-linear-to-b from-amber-50/80 to-orange-50/40 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-300/60 dark:border-amber-700/40 shadow-lg shadow-amber-200/20 dark:shadow-amber-900/10"
                     : isLost
@@ -1160,8 +1159,8 @@ export default function App() {
               </div>
 
               {/* Progress bar */}
-              <div className="w-full max-w-85 px-1">
-                <div className="flex justify-between text-[11px] text-slate-400 dark:text-slate-500 mb-1.5">
+              <div className="w-full max-w-85 px-0.5 sm:px-1">
+                <div className="flex justify-between text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 mb-1 sm:mb-1.5">
                   <span className="font-semibold">Mistakes</span>
                   <span
                     className={`font-bold tabular-nums ${wrongGuesses >= 5 ? "text-red-500" : "text-slate-600 dark:text-slate-300"}`}
@@ -1169,7 +1168,7 @@ export default function App() {
                     {wrongGuesses} / {MAX_WRONG}
                   </span>
                 </div>
-                <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-1.5 sm:h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
                     style={{
@@ -1180,11 +1179,11 @@ export default function App() {
                     }}
                   />
                 </div>
-                <div className="flex justify-center gap-2 mt-2">
+                <div className="flex justify-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
                   {Array.from({length: MAX_WRONG}, (_, i) => (
                     <div
                       key={i}
-                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                      className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all duration-300 ${
                         i < wrongGuesses
                           ? "bg-red-400 dark:bg-red-500 scale-110"
                           : "bg-slate-200 dark:bg-slate-700"
@@ -1196,16 +1195,16 @@ export default function App() {
             </div>
 
             {/* RIGHT: word + keyboard */}
-            <div className="flex-1 w-full flex flex-col gap-4">
+            <div className="flex-1 w-full flex flex-col gap-2 sm:gap-4">
               {/* Word blanks */}
-              <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3 min-h-16 py-3">
+              <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2.5 md:gap-3 min-h-12 sm:min-h-16 py-2 sm:py-3">
                 {word.split("").map((letter, i) => {
                   const revealed = guessedLetters.has(letter);
                   const justRevealed = revealedLetter === letter;
                   return (
                     <div key={i} className="flex flex-col items-center gap-1.5">
                       <span
-                        className={`text-2xl sm:text-3xl font-black w-9 sm:w-10 inline-block text-center transition-all duration-300 ${
+                        className={`text-lg sm:text-2xl md:text-3xl font-black w-6 sm:w-9 md:w-10 inline-block text-center transition-all duration-300 ${
                           revealed
                             ? isLost
                               ? "text-red-500"
@@ -1226,7 +1225,7 @@ export default function App() {
                         {revealed || isLost ? letter : "?"}
                       </span>
                       <div
-                        className={`h-0.75 w-9 sm:w-10 rounded-full transition-all duration-500 ${
+                        className={`h-0.75 w-6 sm:w-9 md:w-10 rounded-full transition-all duration-500 ${
                           revealed
                             ? isLost
                               ? "bg-red-400"
@@ -1240,16 +1239,16 @@ export default function App() {
               </div>
 
               {/* Wrong letter badges */}
-              <div className="min-h-8 flex flex-wrap justify-center gap-2 items-center">
+              <div className="min-h-6 sm:min-h-8 flex flex-wrap justify-center gap-1.5 sm:gap-2 items-center">
                 {wrongLetters.length > 0 && (
                   <>
-                    <span className="w-full text-center text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-0.5">
+                    <span className="w-full text-center text-slate-400 dark:text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-widest font-semibold mb-0.5">
                       {E.skull} Wrong guesses
                     </span>
                     {wrongLetters.map((l) => (
                       <span
                         key={l}
-                        className="bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/50 text-red-500 dark:text-red-400 px-3 py-1 rounded-lg text-xs font-bold shadow-sm"
+                        className="bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/50 text-red-500 dark:text-red-400 px-2 py-0.5 sm:px-3 sm:py-1 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold shadow-sm"
                         style={{
                           animation:
                             "popIn 0.15s cubic-bezier(0.34,1.56,0.64,1) forwards",
@@ -1263,16 +1262,16 @@ export default function App() {
               </div>
 
               {/* Keyboard */}
-              <div className="keyboard-surface px-3 py-3 sm:px-5 sm:py-4">
-                <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+              <div className="keyboard-surface px-1.5 py-2 sm:px-5 sm:py-4">
+                <div className="flex flex-col items-center gap-1 sm:gap-2">
                   {KEY_ROWS.map((row, rowIndex) => (
                     <div
                       key={row}
-                      className={`flex justify-center gap-1 sm:gap-1.5 ${
+                      className={`flex justify-center gap-[3px] sm:gap-1.5 ${
                         rowIndex === 1
-                          ? "px-2 sm:px-4"
+                          ? "pl-[5%] pr-[5%] sm:px-4"
                           : rowIndex === 2
-                            ? "px-4 sm:px-8"
+                            ? "pl-[12%] pr-[12%] sm:px-8"
                             : ""
                       }`}
                     >
@@ -1295,7 +1294,7 @@ export default function App() {
                             disabled={isGuessed || isOver}
                             className={`keycap ${stateClass} ${
                               isPressed ? "keycap--pressed" : ""
-                            } w-9 h-11 sm:w-11 sm:h-12 text-xs sm:text-sm select-none ${
+                            } w-[30px] h-[36px] sm:w-11 sm:h-12 text-[11px] sm:text-sm select-none ${
                               isGuessed || isOver
                                 ? "cursor-default opacity-transition"
                                 : "hover:-translate-y-0.5 active:scale-95"
@@ -1311,12 +1310,12 @@ export default function App() {
               </div>
 
               {/* Action buttons */}
-              <div className="flex justify-center gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 pt-1 sm:pt-2">
                 {/* Hint button */}
                 <button
                   onClick={() => setShowHintModal(true)}
                   disabled={!canHint}
-                  className={`group h-11 px-6 rounded-xl font-bold text-sm tracking-wider transition-all duration-200 flex items-center gap-2 border ${
+                  className={`group h-10 sm:h-11 px-4 sm:px-6 rounded-xl font-bold text-sm tracking-wider transition-all duration-200 flex items-center justify-center gap-2 border w-full sm:w-auto ${
                     canHint
                       ? "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 shadow-md shadow-slate-900/8 hover:shadow-lg hover:scale-[1.03] active:scale-[0.97]"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-not-allowed shadow-none"
@@ -1341,7 +1340,7 @@ export default function App() {
                 {/* New game button */}
                 <button
                   onClick={startNewGame}
-                  className="group h-11 px-8 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-sm shadow-lg shadow-slate-900/20 dark:shadow-black/10 transition-all duration-200 hover:shadow-xl hover:scale-[1.03] active:scale-[0.97] tracking-wider flex items-center gap-2 border border-slate-800 dark:border-slate-200"
+                  className="group h-10 sm:h-11 px-5 sm:px-8 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-sm shadow-lg shadow-slate-900/20 dark:shadow-black/10 transition-all duration-200 hover:shadow-xl hover:scale-[1.03] active:scale-[0.97] tracking-wider flex items-center justify-center gap-2 border border-slate-800 dark:border-slate-200 w-full sm:w-auto"
                 >
                   <span className="inline-block group-hover:animate-[spin_0.5s_linear]">
                     {E.refresh}
@@ -1353,7 +1352,7 @@ export default function App() {
           </div>
         </main>
 
-        <p className="mt-5 text-slate-400 dark:text-slate-600 text-[11px] text-center select-none font-medium tracking-wide">
+        <p className="mt-3 sm:mt-5 text-slate-400 dark:text-slate-600 text-[10px] sm:text-[11px] text-center select-none font-medium tracking-wide hidden sm:block">
           {E.kbd} Tip: Use your physical keyboard too!
         </p>
 
@@ -1377,7 +1376,7 @@ export default function App() {
             />
 
             <div
-              className="relative bg-white dark:bg-slate-900 rounded-2xl p-6 text-center max-w-sm w-full z-10 border border-slate-200 dark:border-slate-700 shadow-2xl shadow-black/20"
+              className="relative bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 text-center max-w-sm w-full z-10 border border-slate-200 dark:border-slate-700 shadow-2xl shadow-black/20 max-h-[90vh] overflow-y-auto"
               style={{
                 animation:
                   "modalSlideUp 0.3s cubic-bezier(.34,1.56,.64,1) forwards",
@@ -1554,7 +1553,7 @@ export default function App() {
 
             {/* ── WIN CARD ─────────────────────────────────────────────── */}
             <div
-              className="relative bg-white dark:bg-slate-900 rounded-2xl p-7 text-center max-w-md w-full z-10 border border-slate-200/80 dark:border-slate-700/80 shadow-2xl shadow-black/10 dark:shadow-black/30"
+              className="relative bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-7 text-center max-w-md w-full z-10 border border-slate-200/80 dark:border-slate-700/80 shadow-2xl shadow-black/10 dark:shadow-black/30 max-h-[90vh] overflow-y-auto"
               style={{
                 animation:
                   "resultSlideIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards",
@@ -1568,7 +1567,7 @@ export default function App() {
                 }}
               >
                 <div
-                  className="text-7xl leading-none select-none mx-auto inline-block"
+                  className="text-5xl sm:text-7xl leading-none select-none mx-auto inline-block"
                   style={{
                     animation: "trophyFloat 2.5s ease 0.8s infinite alternate",
                   }}
@@ -1612,7 +1611,7 @@ export default function App() {
               <div
                 className="font-black tracking-wider mb-1"
                 style={{
-                  fontSize: 36,
+                  fontSize: "clamp(24px, 7vw, 36px)",
                   lineHeight: 1.1,
                   color: "#1e293b",
                 }}
@@ -1772,7 +1771,7 @@ export default function App() {
 
             {/* ── LOSE CARD ────────────────────────────────────────────── */}
             <div
-              className="relative bg-slate-950 border border-red-900/40 rounded-2xl p-7 text-center max-w-md w-full z-10 shadow-2xl shadow-black/30"
+              className="relative bg-slate-950 border border-red-900/40 rounded-2xl p-5 sm:p-7 text-center max-w-md w-full z-10 shadow-2xl shadow-black/30 max-h-[90vh] overflow-y-auto"
               style={{
                 animation:
                   "resultSlideIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards",
@@ -1780,7 +1779,7 @@ export default function App() {
             >
               {/* Skull */}
               <div
-                className="text-7xl leading-none select-none mb-1.5 inline-block"
+                className="text-5xl sm:text-7xl leading-none select-none mb-1.5 inline-block"
                 style={{
                   animation:
                     "loseSlam 0.6s cubic-bezier(.34,1.56,.64,1) forwards, loseShake 0.4s ease 0.7s 2",
@@ -1793,7 +1792,7 @@ export default function App() {
               <div
                 className="font-black tracking-wider mb-1.5"
                 style={{
-                  fontSize: 32,
+                  fontSize: "clamp(22px, 6vw, 32px)",
                   color: "#ef4444",
                   textShadow: "0 0 30px rgba(239,68,68,0.3)",
                 }}

@@ -17,6 +17,9 @@
 
 body {
   font-family: var(--font-body);
+  overscroll-behavior: none;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 .font-sans {
@@ -151,6 +154,15 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Touch improvements for all elements */
+a,
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
 /* Smooth opacity transitions for disabled states */
 .opacity-transition {
   transition: opacity 0.3s ease;
@@ -159,6 +171,24 @@ button {
 /* Hardware-accelerated animations for smooth performance */
 .keycap {
   will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Ensure smooth canvas scaling on mobile */
+canvas {
+  image-rendering: auto;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
